@@ -11,8 +11,7 @@ import main.api.response.restore.EmailResponse;
 import main.api.response.restore.RestoreResponse;
 import main.model.GlobalSettings;
 import main.model.GlobalSettingsRepository;
-import main.model.Users;
-import main.model.UsersRepository;
+import main.model.UserRepository;
 import main.service.*;
 import main.service.PasswordService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.Optional;
 
 @RestController
 public class ApiAuthController {
@@ -46,7 +44,7 @@ public class ApiAuthController {
     private HttpSession httpSession;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     public ApiAuthController(СaptchaService сaptchaService,
                              UserRegistrationService userRegistrationService,

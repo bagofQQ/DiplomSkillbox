@@ -9,7 +9,6 @@ import org.jsoup.safety.Whitelist;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
 import java.util.*;
 
 @Service
@@ -22,17 +21,17 @@ public class EditingPostService {
     private static final int USER = 0;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
-    private TagsRepository tagsRepository;
+    private TagRepository tagRepository;
 
     @Autowired
     private TagToPostRepository tagToPostRepository;
 
-    public AddingPostResponse editPost(AddingPostRequest editPostRequest, Optional<Users> optionalUser, int postId) {
+    public AddingPostResponse editPost(AddingPostRequest editPostRequest, Optional<User> optionalUser, int postId) {
 
-        Optional<Posts> optionalPost = postsRepository.findById(postId);
+        Optional<Post> optionalPost = postRepository.findById(postId);
 
         if (editPostRequest.getTitle().length() > 1) {
             String cleanText = Jsoup.clean(editPostRequest.getText(), Whitelist.none());
@@ -63,7 +62,7 @@ public class EditingPostService {
         return postErrors(ERROR_TITLE);
     }
 
-    private AddingPostResponse editPostRecording(AddingPostRequest editPostRequest, ModerationStatus status, Optional<Posts> optionalPost, Date date) {
+    private AddingPostResponse editPostRecording(AddingPostRequest editPostRequest, ModerationStatus status, Optional<Post> optionalPost, Date date) {
         AddingPostResponse addingPostResponse = new AddingPostResponse();
 
         optionalPost.get().setIsActive(editPostRequest.getActive());
@@ -72,26 +71,26 @@ public class EditingPostService {
         optionalPost.get().setTitle(editPostRequest.getTitle());
 
         optionalPost.get().setText(editPostRequest.getText());
-        postsRepository.save(optionalPost.get());
+        postRepository.save(optionalPost.get());
 
-        Iterable<Tags> tagsIterable = tagsRepository.findAll();
+        Iterable<Tag> tagsIterable = tagRepository.findAll();
 
         for (String tagFromArray : editPostRequest.getTags()) {
-            Tags tagsBase = new Tags();
+            Tag tagBase = new Tag();
             TagToPost tagToPostBase = new TagToPost();
             HashMap<String, Integer> tMap = new HashMap<>();
 
             String tagLowerCase = tagFromArray.toLowerCase();
 
-            for (Tags tagFromBase : tagsIterable) {
+            for (Tag tagFromBase : tagsIterable) {
                 if (tagFromBase.getName().equals(tagLowerCase)) {
                     tMap.put(tagLowerCase, tagFromBase.getId());
                 }
             }
             if (!tMap.containsKey(tagLowerCase)) {
-                tagsBase.setName(tagLowerCase);
-                tagsRepository.save(tagsBase);
-                tagToPostBase.setTagId(tagsBase.getId());
+                tagBase.setName(tagLowerCase);
+                tagRepository.save(tagBase);
+                tagToPostBase.setTagId(tagBase.getId());
                 tagToPostBase.setPostId(optionalPost.get().getId());
                 tagToPostRepository.save(tagToPostBase);
             }

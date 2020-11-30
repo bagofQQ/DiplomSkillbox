@@ -1,7 +1,7 @@
 package main.controller;
 
-import main.model.Users;
-import main.model.UsersRepository;
+import main.model.User;
+import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +15,7 @@ import java.util.Random;
 public class DefaultController {
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @RequestMapping("/")
     public String index() {
@@ -31,16 +31,16 @@ public class DefaultController {
 
 
     public void insertModer() {
-        Users users = new Users();
+        User user = new User();
         Calendar calendar = Calendar.getInstance();
         Date date = calendar.getTime();
-        users.setIsModerator(1);
-        users.setRegTime(date);
-        users.setName("Модер");
-        users.setEmail("moder@mail.ru");
-        users.setPassword("moder123");
-        users.setCode(getGeneratedSecretCode());
-        usersRepository.save(users);
+        user.setIsModerator(1);
+        user.setRegTime(date);
+        user.setName("Модер");
+        user.setEmail("moder@mail.ru");
+        user.setPassword("moder123");
+        user.setCode(getGeneratedSecretCode());
+        userRepository.save(user);
     }
 
     public String getGeneratedSecretCode() {

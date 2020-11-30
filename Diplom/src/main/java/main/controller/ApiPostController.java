@@ -25,10 +25,10 @@ public class ApiPostController {
     private GlobalSettingsRepository globalSettingsRepository;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private HttpSession httpSession;
@@ -69,7 +69,7 @@ public class ApiPostController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return addingPostService.add(addingPostRequest, optionalUser);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -81,7 +81,7 @@ public class ApiPostController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalModer = usersRepository.findById(q);
+            Optional<User> optionalModer = userRepository.findById(q);
             return new ResponseEntity(postsService.getModerationPosts(optionalModer, offset, limit, status), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -92,7 +92,7 @@ public class ApiPostController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(postsService.getMyPosts(optionalUser, offset, limit, status), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -103,7 +103,7 @@ public class ApiPostController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(likeDislikeService.postLike(optionalUser, likeRequest.getPostId()), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -115,7 +115,7 @@ public class ApiPostController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(likeDislikeService.postDislike(optionalUser, dislikeRequest.getPostId()), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -123,7 +123,7 @@ public class ApiPostController {
 
     @GetMapping("/api/post/{id}")
     public ResponseEntity<SinglePostResponse> getSingle(@PathVariable int id) {
-        Optional<Posts> optionalPost = postsRepository.findById(id);
+        Optional<Post> optionalPost = postRepository.findById(id);
         String identifier = httpSession.getId();
         if (optionalPost.isPresent()) {
             return new ResponseEntity(singlePostService.getSinglePost(optionalPost, identifier, userLoginService.getIdentifierMap()), HttpStatus.OK);
@@ -136,7 +136,7 @@ public class ApiPostController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(editingPostService.editPost(
                     editPostRequest,
                     optionalUser,

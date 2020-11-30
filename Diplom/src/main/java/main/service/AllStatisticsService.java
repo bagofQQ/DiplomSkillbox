@@ -21,7 +21,7 @@ public class AllStatisticsService {
     private static final int ACTIVE_POST = 1;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private PostVotesRepository postVotesRepository;
@@ -33,7 +33,7 @@ public class AllStatisticsService {
     private HttpSession httpSession;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     public ResponseEntity<StatisticsResponse> getStatistics(HashMap<String, Integer> identifierMap) {
         Iterable<GlobalSettings> globalSettingsIterable = globalSettingsRepository.findAll();
@@ -44,7 +44,7 @@ public class AllStatisticsService {
             String identifier = httpSession.getId();
             if (identifierMap.containsKey(identifier)) {
                 int q = identifierMap.get(identifier);
-                Optional<Users> optionalUser = usersRepository.findById(q);
+                Optional<User> optionalUser = userRepository.findById(q);
                 if (optionalUser.get().getIsModerator() == 1) {
                     return new ResponseEntity(getAllStat(), HttpStatus.OK);
                 }
@@ -63,9 +63,9 @@ public class AllStatisticsService {
         List likeList = new ArrayList();
         List dislikeList = new ArrayList();
 
-        Iterable<Posts> postsIterable = postsRepository.findAll();
+        Iterable<Post> postsIterable = postRepository.findAll();
         if (postsIterable.iterator().hasNext()) {
-            for (Posts f : postsIterable) {
+            for (Post f : postsIterable) {
                 if (f.getIsActive() == ACTIVE_POST & f.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
                     postList.add(f.getId());
                     viewsList.add(f.getViewCount());
@@ -106,7 +106,7 @@ public class AllStatisticsService {
         return statisticsResponse;
     }
 
-    public StatisticsResponse getUserStat(Optional<Users> optionalUser) {
+    public StatisticsResponse getUserStat(Optional<User> optionalUser) {
         StatisticsResponse statisticsResponse = new StatisticsResponse();
         int idUser = optionalUser.get().getId();
 
@@ -116,9 +116,9 @@ public class AllStatisticsService {
         List likeList = new ArrayList();
         List dislikeList = new ArrayList();
 
-        Iterable<Posts> postsIterable = postsRepository.findAll();
+        Iterable<Post> postsIterable = postRepository.findAll();
         if (postsIterable.iterator().hasNext()) {
-            for (Posts f : postsIterable) {
+            for (Post f : postsIterable) {
                 if (f.getIsActive() == ACTIVE_POST & f.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
                     if (idUser == f.getUser().getId()) {
                         postList.add(f.getId());

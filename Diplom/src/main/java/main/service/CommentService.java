@@ -21,15 +21,15 @@ public class CommentService {
     private static final String ERROR_TEXT = "Текст комментария не задан или слишком короткий";
 
     @Autowired
-    private PostCommentsRepository postCommentsRepository;
+    private PostCommentRepository postCommentRepository;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
-    public ResponseEntity<CommentResponse> postComment(CommentRequest commentRequest, Optional<Users> optionalUser) {
+    public ResponseEntity<CommentResponse> postComment(CommentRequest commentRequest, Optional<User> optionalUser) {
 
-        Optional<Posts> optionalPosts = postsRepository.findById(commentRequest.getPostId());
-        Optional<PostComments> optionalPostComments = postCommentsRepository.findById(commentRequest.getParentId());
+        Optional<Post> optionalPosts = postRepository.findById(commentRequest.getPostId());
+        Optional<PostComment> optionalPostComments = postCommentRepository.findById(commentRequest.getParentId());
 
         if (optionalPosts.isPresent() || optionalPostComments.isPresent()) {
             String cleanText = Jsoup.clean(commentRequest.getText(), Whitelist.none());
@@ -41,22 +41,22 @@ public class CommentService {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
-    private CommentResponse commentRecording(CommentRequest commentRequest, Optional<Users> optionalUser) {
+    private CommentResponse commentRecording(CommentRequest commentRequest, Optional<User> optionalUser) {
         CommentResponse commentResponse = new CommentResponse();
-        PostComments postComments = new PostComments();
+        PostComment postComment = new PostComment();
         int idUser = optionalUser.get().getId();
 
-        postComments.setParentId(commentRequest.getParentId());
-        postComments.setPostId(commentRequest.getPostId());
-        postComments.setUser(optionalUser.get());
+        postComment.setParentId(commentRequest.getParentId());
+        postComment.setPostId(commentRequest.getPostId());
+        postComment.setUser(optionalUser.get());
         Calendar calendar = Calendar.getInstance();
         Date date = calendar.getTime();
-        postComments.setTime(date);
-        postComments.setText(commentRequest.getText());
-        postCommentsRepository.save(postComments);
+        postComment.setTime(date);
+        postComment.setText(commentRequest.getText());
+        postCommentRepository.save(postComment);
 
-        Iterable<PostComments> postCommentsIterable = postCommentsRepository.findAll();
-        for (PostComments f : postCommentsIterable) {
+        Iterable<PostComment> postCommentsIterable = postCommentRepository.findAll();
+        for (PostComment f : postCommentsIterable) {
             if (f.getUser().getId() == idUser & f.getTime().equals(date)) {
                 commentResponse.setId(f.getId());
             }

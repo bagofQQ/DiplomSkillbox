@@ -30,10 +30,10 @@ import java.util.Optional;
 public class ApiGeneralController {
 
     @Autowired
-    private PostCommentsRepository postCommentsRepository;
+    private PostCommentRepository postCommentRepository;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     private static final int SIZE = 5242880;
     private static final String FORMAT_JPG = "jpg";
@@ -46,7 +46,7 @@ public class ApiGeneralController {
     private HttpSession httpSession;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     private final InitResponse initResponse;
     private final SettingsService settingsService;
@@ -112,7 +112,7 @@ public class ApiGeneralController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(profileService.updateUserProfileWithPhoto(profile, optionalUser), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -125,7 +125,7 @@ public class ApiGeneralController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(profileService.updateUserProfile(profile, optionalUser), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -155,7 +155,7 @@ public class ApiGeneralController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(moderationService.getMod(
                     request.getPostId(),
                     request.getDecision(),
@@ -170,7 +170,7 @@ public class ApiGeneralController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return commentService.postComment(commentRequest, optionalUser);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -187,7 +187,7 @@ public class ApiGeneralController {
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
             int q = userLoginService.getIdentifierMap().get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             return new ResponseEntity(allStatisticsService.getUserStat(optionalUser), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);

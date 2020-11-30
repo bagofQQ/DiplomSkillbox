@@ -30,15 +30,15 @@ public class AddingPostService {
     private GlobalSettingsRepository globalSettingsRepository;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
-    private TagsRepository tagsRepository;
+    private TagRepository tagRepository;
 
     @Autowired
     private TagToPostRepository tagToPostRepository;
 
-    public ResponseEntity<AddingPostResponse> add(AddingPostRequest addingPostRequest, Optional<Users> optionalUser) {
+    public ResponseEntity<AddingPostResponse> add(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
         Iterable<GlobalSettings> globalSettingsIterable = globalSettingsRepository.findAll();
         if (checkSettings(PP_CODE, globalSettingsIterable)) {
             if (checkSettings(MM_CODE, globalSettingsIterable)) {
@@ -63,7 +63,7 @@ public class AddingPostService {
         }
     }
 
-    private AddingPostResponse addPost(AddingPostRequest addingPostRequest, Optional<Users> optionalUser) {
+    private AddingPostResponse addPost(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
 
         if (addingPostRequest.getTitle().length() > 1) {
             String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
@@ -83,7 +83,7 @@ public class AddingPostService {
         return postErrors(ERROR_TITLE);
     }
 
-    private AddingPostResponse addPostModeratorOnly(AddingPostRequest addingPostRequest, Optional<Users> optionalUser) {
+    private AddingPostResponse addPostModeratorOnly(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
 
         if (addingPostRequest.getTitle().length() > 1) {
             String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
@@ -103,7 +103,7 @@ public class AddingPostService {
         return postErrors(ERROR_TITLE);
     }
 
-    private AddingPostResponse addPostWithoutPremoderation(AddingPostRequest addingPostRequest, Optional<Users> optionalUser) {
+    private AddingPostResponse addPostWithoutPremoderation(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
         if (addingPostRequest.getTitle().length() > 1) {
             String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
             if (cleanText.length() > 50) {
@@ -124,46 +124,46 @@ public class AddingPostService {
 
     private AddingPostResponse postRecording(
             AddingPostRequest addingPostRequest,
-            Optional<Users> optionalUser,
+            Optional<User> optionalUser,
             Date date, ModerationStatus status, int moderatorId) {
         AddingPostResponse addingPostResponse = new AddingPostResponse();
-        Posts posts = new Posts();
+        Post post = new Post();
 
-        posts.setIsActive(addingPostRequest.getActive());
-        posts.setModerationStatus(status);
-        posts.setModeratorId(moderatorId);
+        post.setIsActive(addingPostRequest.getActive());
+        post.setModerationStatus(status);
+        post.setModeratorId(moderatorId);
 
-        posts.setUser(optionalUser.get());
+        post.setUser(optionalUser.get());
 
-        posts.setTime(date);
-        posts.setTitle(addingPostRequest.getTitle());
-        posts.setText(addingPostRequest.getText());
-        posts.setViewCount(0);
-        postsRepository.save(posts);
+        post.setTime(date);
+        post.setTitle(addingPostRequest.getTitle());
+        post.setText(addingPostRequest.getText());
+        post.setViewCount(0);
+        postRepository.save(post);
 
-        Iterable<Tags> tagsIterable = tagsRepository.findAll();
+        Iterable<Tag> tagsIterable = tagRepository.findAll();
 
         for (String tagFromArray : addingPostRequest.getTags()) {
-            Tags tagsBase = new Tags();
+            Tag tagBase = new Tag();
             TagToPost tagToPostBase = new TagToPost();
             HashMap<String, Integer> tMap = new HashMap<>();
 
             String tagLowerCase = tagFromArray.toLowerCase();
 
-            for (Tags tagFromBase : tagsIterable) {
+            for (Tag tagFromBase : tagsIterable) {
                 if (tagFromBase.getName().equals(tagLowerCase)) {
                     tMap.put(tagLowerCase, tagFromBase.getId());
                 }
             }
             if (tMap.containsKey(tagLowerCase)) {
                 tagToPostBase.setTagId(tMap.get(tagLowerCase));
-                tagToPostBase.setPostId(posts.getId());
+                tagToPostBase.setPostId(post.getId());
                 tagToPostRepository.save(tagToPostBase);
             } else {
-                tagsBase.setName(tagLowerCase);
-                tagsRepository.save(tagsBase);
-                tagToPostBase.setTagId(tagsBase.getId());
-                tagToPostBase.setPostId(posts.getId());
+                tagBase.setName(tagLowerCase);
+                tagRepository.save(tagBase);
+                tagToPostBase.setTagId(tagBase.getId());
+                tagToPostBase.setPostId(post.getId());
                 tagToPostRepository.save(tagToPostBase);
             }
         }

@@ -5,8 +5,8 @@ import main.api.response.password.ErrorsPasswordResponse;
 import main.api.response.password.PasswordResponse;
 import main.model.CaptchaCodes;
 import main.model.CaptchaCodesRepository;
-import main.model.Users;
-import main.model.UsersRepository;
+import main.model.User;
+import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,7 @@ public class PasswordService {
     private int idUserChangePassword;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private CaptchaCodesRepository captchaCodesRepository;
@@ -36,11 +36,11 @@ public class PasswordService {
             if (checkCaptcha(password.getCaptchaSecret(), password.getCaptcha())) {
                 if (password.getPassword().length() >= 6) {
                     int idUCP = getIdUserChangePassword();
-                    Optional<Users> optionalUsers = usersRepository.findById(idUCP);
+                    Optional<User> optionalUsers = userRepository.findById(idUCP);
 
                     optionalUsers.get().setCode(password.getCaptchaSecret());
                     optionalUsers.get().setPassword(password.getPassword());
-                    usersRepository.save(optionalUsers.get());
+                    userRepository.save(optionalUsers.get());
 
                     passwordResponse.setResult(true);
                     return passwordResponse;
@@ -80,9 +80,9 @@ public class PasswordService {
     }
 
     private boolean checkCode(String code) {
-        Iterable<Users> usersIterable = usersRepository.findAll();
-        for (Users q : usersIterable) {
-            Optional<Users> optionalUsers = usersRepository.findById(q.getId());
+        Iterable<User> usersIterable = userRepository.findAll();
+        for (User q : usersIterable) {
+            Optional<User> optionalUsers = userRepository.findById(q.getId());
             if (code.equals(optionalUsers.get().getCode())) {
                 setIdUserChangePassword(optionalUsers.get().getId());
                 return true;

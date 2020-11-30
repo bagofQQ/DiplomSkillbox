@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-public class Users {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,13 +30,13 @@ public class Users {
 
 
     @OneToMany(mappedBy = "user")
-    private List<Posts> posts;
+    private List<Post> posts;
 
     @OneToMany(mappedBy = "user")
     private List<PostVotes> postVotes;
 
     @OneToMany(mappedBy = "user")
-    private List<PostComments> postComments;
+    private List<PostComment> postComments;
 
 
     public int getId() {
@@ -103,11 +103,11 @@ public class Users {
         this.photo = photo;
     }
 
-    public List<Posts> getPosts() {
+    public List<Post> getPosts() {
         return posts;
     }
 
-    public void setPosts(List<Posts> posts) {
+    public void setPosts(List<Post> posts) {
         this.posts = posts;
     }
 
@@ -119,11 +119,11 @@ public class Users {
         this.postVotes = postVotes;
     }
 
-    public List<PostComments> getPostComments() {
+    public List<PostComment> getPostComments() {
         return postComments;
     }
 
-    public void setPostComments(List<PostComments> postComments) {
+    public void setPostComments(List<PostComment> postComments) {
         this.postComments = postComments;
     }
 

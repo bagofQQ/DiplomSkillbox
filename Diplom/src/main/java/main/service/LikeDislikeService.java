@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpSession;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Optional;
 
 @Service
@@ -19,19 +18,19 @@ public class LikeDislikeService {
     private static final int DISLIKE = -1;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private HttpSession httpSession;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private PostVotesRepository postVotesRepository;
 
 
-    public LikeResponse postLike(Optional<Users> optionalUser, int postId) {
+    public LikeResponse postLike(Optional<User> optionalUser, int postId) {
         LikeResponse likeResponse = new LikeResponse();
         PostVotes postVotes = new PostVotes();
 
@@ -72,7 +71,7 @@ public class LikeDislikeService {
         return likeResponse;
     }
 
-    public DislikeResponse postDislike(Optional<Users> optionalUser, int postId) {
+    public DislikeResponse postDislike(Optional<User> optionalUser, int postId) {
         DislikeResponse dislikeResponse = new DislikeResponse();
         PostVotes postVotes = new PostVotes();
         int idUser = optionalUser.get().getId();

@@ -13,7 +13,7 @@ public class PostVotes {
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName="id")
-    private Users user;
+    private User user;
 
     @Column(name = "post_id")
     private int postId;
@@ -62,11 +62,11 @@ public class PostVotes {
         this.value = value;
     }
 
-    public Users getUser() {
+    public User getUser() {
         return user;
     }
 
-    public void setUser(Users user) {
+    public void setUser(User user) {
         this.user = user;
     }
 }

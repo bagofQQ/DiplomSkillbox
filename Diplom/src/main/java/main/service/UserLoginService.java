@@ -3,8 +3,8 @@ package main.service;
 import main.api.response.LogoutResponse;
 import main.api.response.login.UserLoginInfoResponse;
 import main.api.response.login.UserLoginResponse;
-import main.model.Users;
-import main.model.UsersRepository;
+import main.model.User;
+import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ public class UserLoginService {
     private HashMap<String, Integer> identifierMap = new HashMap<>();
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private HttpSession httpSession;
@@ -27,10 +27,10 @@ public class UserLoginService {
     public UserLoginResponse getUserLoginInfo(String email, String password) {
         UserLoginResponse userLoginResponse = new UserLoginResponse();
         UserLoginInfoResponse userLoginInfoResponse = new UserLoginInfoResponse();
-        Iterable<Users> usersIterable = usersRepository.findAll();
+        Iterable<User> usersIterable = userRepository.findAll();
         String identifier = httpSession.getId();
-        for (Users f : usersIterable) {
-            Optional<Users> optionalUser = usersRepository.findById(f.getId());
+        for (User f : usersIterable) {
+            Optional<User> optionalUser = userRepository.findById(f.getId());
             if (email.equals(optionalUser.get().getEmail()) & password.equals(optionalUser.get().getPassword())) {
                 int id = optionalUser.get().getId();
                 identifierMap.put(identifier, id);
@@ -65,7 +65,7 @@ public class UserLoginService {
             for (Map.Entry<String, Integer> f : identifierMap.entrySet()) {
                 if (f.getKey().equals(identifier)) {
                     int q = identifierMap.get(identifier);
-                    Optional<Users> optionalUser = usersRepository.findById(q);
+                    Optional<User> optionalUser = userRepository.findById(q);
                     int id = optionalUser.get().getId();
                     checkUserLoginInfoResponse.setId(id);
                     checkUserLoginInfoResponse.setName(optionalUser.get().getName());

@@ -5,12 +5,11 @@ import main.api.response.registration.ErrorsRegistrationResponse;
 import main.api.response.registration.UserRegistrationResponse;
 import main.model.CaptchaCodes;
 import main.model.CaptchaCodesRepository;
-import main.model.Users;
-import main.model.UsersRepository;
+import main.model.User;
+import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
@@ -25,7 +24,7 @@ public class UserRegistrationService {
     private static final String ERROR_PASSWORD = "Пароль короче 6-ти символов";
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private CaptchaCodesRepository captchaCodesRepository;
@@ -36,7 +35,7 @@ public class UserRegistrationService {
         ErrorsRegistrationResponse errors = new ErrorsRegistrationResponse();
         Calendar calendar = Calendar.getInstance();
         Date date = calendar.getTime();
-        Users users = new Users();
+        User users = new User();
         if (checkEmail(user.getEmail())) {
             if (user.getName().matches(CHECK_NAME)) {
                 if (checkCaptcha(user.getCaptchaSecret(), user.getCaptcha())) {
@@ -46,7 +45,7 @@ public class UserRegistrationService {
                         users.setEmail(user.getEmail());
                         users.setPassword(user.getPassword());
                         users.setCode(user.getCaptchaSecret());
-                        usersRepository.save(users);
+                        userRepository.save(users);
                         userReg.setResult(true);
                         return userReg;
                     } else {
@@ -91,10 +90,10 @@ public class UserRegistrationService {
     }
 
     private boolean checkEmail(String email) {
-        Iterable<Users> usersIterable = usersRepository.findAll();
+        Iterable<User> usersIterable = userRepository.findAll();
         if (usersIterable.iterator().hasNext()) {
-            for (Users q : usersIterable) {
-                Optional<Users> optionalUsers = usersRepository.findById(q.getId());
+            for (User q : usersIterable) {
+                Optional<User> optionalUsers = userRepository.findById(q.getId());
                 if (email.equals(optionalUsers.get().getEmail())) {
                     return false;
                 } else {

@@ -3,8 +3,6 @@ package main.service;
 import main.api.response.posts.UserResponse;
 import main.api.response.singlepost.*;
 import main.model.*;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Whitelist;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,45 +20,45 @@ public class SinglePostService {
     private static final int USER = 0;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private PostVotesRepository postVotesRepository;
 
     @Autowired
-    private PostCommentsRepository postCommentsRepository;
+    private PostCommentRepository postCommentRepository;
 
 
-    public SinglePostResponse getSinglePost(Optional<Posts> optionalPost, String identifier, HashMap<String, Integer> identifierMap) {
+    public SinglePostResponse getSinglePost(Optional<Post> optionalPost, String identifier, HashMap<String, Integer> identifierMap) {
         if (optionalPost.get().getIsActive() == ACTIVE_POST & optionalPost.get().getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
             return singlPostRecording(identifierMap, identifier, optionalPost, true);
         }
         return singlPostRecording(identifierMap, identifier, optionalPost, false);
     }
 
-    private SinglePostResponse singlPostRecording(HashMap<String, Integer> identifierMap, String identifier, Optional<Posts> optionalPost, boolean active) {
+    private SinglePostResponse singlPostRecording(HashMap<String, Integer> identifierMap, String identifier, Optional<Post> optionalPost, boolean active) {
         SinglePostResponse singlePostResponse = new SinglePostResponse();
         UserResponse userResponse = new UserResponse();
-        Optional<Users> optionalUserAuthor = usersRepository.findById(optionalPost.get().getUser().getId());
+        Optional<User> optionalUserAuthor = userRepository.findById(optionalPost.get().getUser().getId());
         userResponse.setName(optionalUserAuthor.get().getName());
         userResponse.setId(optionalUserAuthor.get().getId());
 
 
         if (identifierMap.containsKey(identifier)) {
             int q = identifierMap.get(identifier);
-            Optional<Users> optionalUser = usersRepository.findById(q);
+            Optional<User> optionalUser = userRepository.findById(q);
             if (optionalUser.get().getIsModerator() == USER) {
                 if (optionalPost.get().getUser().getId() != optionalUser.get().getId()) {
                     optionalPost.get().setViewCount(optionalPost.get().getViewCount() + 1);
-                    postsRepository.save(optionalPost.get());
+                    postRepository.save(optionalPost.get());
                 }
             }
         } else if (!identifierMap.containsKey(identifier)) {
             optionalPost.get().setViewCount(optionalPost.get().getViewCount() + 1);
-            postsRepository.save(optionalPost.get());
+            postRepository.save(optionalPost.get());
         }
 
 
@@ -103,10 +101,10 @@ public class SinglePostService {
 
 
         List<SingleCommentInfoResponse> sCommentList = new ArrayList<>();
-        Iterable<PostComments> postCommentsIterable = postCommentsRepository.findAll();
-        for (PostComments f : postCommentsIterable) {
+        Iterable<PostComment> postCommentsIterable = postCommentRepository.findAll();
+        for (PostComment f : postCommentsIterable) {
             if (optionalPost.get().getId() == f.getPostId()) {
-                Optional<Users> optionalUsersComment = usersRepository.findById(f.getUser().getId());
+                Optional<User> optionalUsersComment = userRepository.findById(f.getUser().getId());
                 UserPhotoResponse us = new UserPhotoResponse();
                 us.setId(optionalUsersComment.get().getId());
                 us.setName(optionalUsersComment.get().getName());

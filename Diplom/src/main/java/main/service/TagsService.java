@@ -2,10 +2,10 @@ package main.service;
 
 import main.api.response.tags.TagsInfoResponse;
 import main.api.response.tags.TagsResponse;
-import main.model.Posts;
-import main.model.PostsRepository;
-import main.model.Tags;
-import main.model.TagsRepository;
+import main.model.Post;
+import main.model.PostRepository;
+import main.model.Tag;
+import main.model.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,30 +21,30 @@ public class TagsService {
     private static final int ACTIVE_POST = 1;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
-    private TagsRepository tagsRepository;
+    private TagRepository tagRepository;
 
     public TagsResponse getAllTags() {
         TagsResponse tagsResponse = new TagsResponse();
 
 
         HashSet<TagsInfoResponse> tagsInfoResponseSet = new HashSet<>();
-        List<Posts> postsList = new ArrayList<>();
-        Iterable<Posts> postsIterable = postsRepository.findAll();
+        List<Post> postList = new ArrayList<>();
+        Iterable<Post> postsIterable = postRepository.findAll();
 
         if (postsIterable.iterator().hasNext()) {
 
-            for (Posts f : postsIterable) {
+            for (Post f : postsIterable) {
                 if (f.getIsActive() == ACTIVE_POST & f.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
-                    postsList.add(f);
+                    postList.add(f);
                 }
             }
-            int postsSize = postsList.size();
+            int postsSize = postList.size();
 
-            Iterable<Tags> tagsIterable = tagsRepository.findAll();
-            for (Tags f : tagsIterable) {
+            Iterable<Tag> tagsIterable = tagRepository.findAll();
+            for (Tag f : tagsIterable) {
                 TagsInfoResponse tagsInfoResponse = new TagsInfoResponse();
 
                 f.getPosts().forEach(posts -> {
@@ -69,16 +69,16 @@ public class TagsService {
         TagsResponse tagsResponse = new TagsResponse();
 
         HashSet<TagsInfoResponse> tagsInfoResponseSet = new HashSet<>();
-        List<Posts> postsList = new ArrayList<>();
-        Iterable<Posts> postsIterable = postsRepository.findAll();
+        List<Post> postList = new ArrayList<>();
+        Iterable<Post> postsIterable = postRepository.findAll();
 
         if (postsIterable.iterator().hasNext()) {
-            for (Posts f : postsIterable) {
-                postsList.add(f);
+            for (Post f : postsIterable) {
+                postList.add(f);
             }
-            int postsSize = postsList.size();
-            Iterable<Tags> tagsIterable = tagsRepository.findAll();
-            for (Tags f : tagsIterable) {
+            int postsSize = postList.size();
+            Iterable<Tag> tagsIterable = tagRepository.findAll();
+            for (Tag f : tagsIterable) {
                 if (tag.equals(f.getName())) {
                     int i = f.getPosts().size();
                     double weight = (double) i / postsSize * 2;

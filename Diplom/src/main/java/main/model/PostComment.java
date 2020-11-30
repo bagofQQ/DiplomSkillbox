@@ -4,8 +4,8 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "post_comments")
-public class PostComments {
+@Table(name = "post_comment")
+public class PostComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +19,7 @@ public class PostComments {
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName="id")
-    private Users user;
+    private User user;
 
     private Date time;
 
@@ -50,14 +50,6 @@ public class PostComments {
         this.postId = postId;
     }
 
-//    public int getUserId() {
-//        return userId;
-//    }
-//
-//    public void setUserId(int userId) {
-//        this.userId = userId;
-//    }
-
     public Date getTime() {
         return time;
     }
@@ -74,11 +66,11 @@ public class PostComments {
         this.text = text;
     }
 
-    public Users getUser() {
+    public User getUser() {
         return user;
     }
 
-    public void setUser(Users user) {
+    public void setUser(User user) {
         this.user = user;
     }
 }

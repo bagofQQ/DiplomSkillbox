@@ -1,8 +1,8 @@
 package main.service;
 
 import main.api.response.restore.RestoreResponse;
-import main.model.Users;
-import main.model.UsersRepository;
+import main.model.User;
+import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,14 +20,14 @@ public class RestoreService {
     private String password = "";
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     public RestoreResponse get(String email) {
         RestoreResponse restoreResponse = new RestoreResponse();
 
-        Iterable<Users> usersIterable = usersRepository.findAll();
-        for (Users f : usersIterable) {
-            Optional<Users> optionalUser = usersRepository.findById(f.getId());
+        Iterable<User> usersIterable = userRepository.findAll();
+        for (User f : usersIterable) {
+            Optional<User> optionalUser = userRepository.findById(f.getId());
             if (email.equals(optionalUser.get().getEmail())) {
                 String code = optionalUser.get().getCode();
                 sendEmail(email, code);

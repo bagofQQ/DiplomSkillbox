@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-public class Tags {
+public class Tag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +18,7 @@ public class Tags {
             joinColumns = {@JoinColumn(name = "tag_id")},
             inverseJoinColumns = {@JoinColumn(name = "post_id")}
     )
-    private List<Posts> posts;
+    private List<Post> posts;
 
 
     public int getId() {
@@ -37,11 +37,11 @@ public class Tags {
         this.name = name;
     }
 
-    public List<Posts> getPosts() {
+    public List<Post> getPosts() {
         return posts;
     }
 
-    public void setPosts(List<Posts> posts) {
+    public void setPosts(List<Post> posts) {
         this.posts = posts;
     }
 }

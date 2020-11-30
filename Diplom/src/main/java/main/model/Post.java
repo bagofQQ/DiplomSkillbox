@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-public class Posts {
+public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,9 +24,7 @@ public class Posts {
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName="id")
-    private Users user;
-
-
+    private User user;
 
     @Column(name = "time")
     private Date time;
@@ -45,7 +43,7 @@ public class Posts {
             joinColumns = {@JoinColumn(name = "post_id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id")}
     )
-    private List<Tags> tags;
+    private List<Tag> tags;
 
 
     public int getId() {
@@ -80,14 +78,6 @@ public class Posts {
         this.moderatorId = moderatorId;
     }
 
-//    public int getUserId() {
-//        return userId;
-//    }
-//
-//    public void setUserId(int userId) {
-//        this.userId = userId;
-//    }
-
     public Date getTime() {
         return time;
     }
@@ -120,19 +110,19 @@ public class Posts {
         this.viewCount = viewCount;
     }
 
-    public List<Tags> getTags() {
+    public List<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<Tags> tags) {
+    public void setTags(List<Tag> tags) {
         this.tags = tags;
     }
 
-    public Users getUser() {
+    public User getUser() {
         return user;
     }
 
-    public void setUser(Users user) {
+    public void setUser(User user) {
         this.user = user;
     }
 

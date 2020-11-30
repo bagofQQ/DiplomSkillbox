@@ -4,8 +4,8 @@ import main.api.response.profile.ErrorsProfileResponse;
 import main.api.request.profile.ProfileRequest;
 import main.api.request.profile.ProfileRequestWithPhoto;
 import main.api.response.profile.ProfileResponse;
-import main.model.Users;
-import main.model.UsersRepository;
+import main.model.User;
+import main.model.UserRepository;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,12 +38,12 @@ public class ProfileService {
     private static final int SIZE = 5242880;
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private HttpSession httpSession;
 
-    public ProfileResponse updateUserProfileWithPhoto(ProfileRequestWithPhoto profile, Optional<Users> optionalUser) throws IOException {
+    public ProfileResponse updateUserProfileWithPhoto(ProfileRequestWithPhoto profile, Optional<User> optionalUser) throws IOException {
         ProfileResponse profileResponse = new ProfileResponse();
         ErrorsProfileResponse errorsProfileResponse = new ErrorsProfileResponse();
 
@@ -73,13 +73,13 @@ public class ProfileService {
         if (password != null) {
             optionalUser.get().setPassword(password);
         }
-        usersRepository.save(optionalUser.get());
+        userRepository.save(optionalUser.get());
         profileResponse.setResult(true);
         return profileResponse;
     }
 
 
-    public ProfileResponse updateUserProfile(ProfileRequest profile, Optional<Users> optionalUser) {
+    public ProfileResponse updateUserProfile(ProfileRequest profile, Optional<User> optionalUser) {
         ProfileResponse profileResponse = new ProfileResponse();
         ErrorsProfileResponse errorsProfileResponse = new ErrorsProfileResponse();
 
@@ -111,12 +111,12 @@ public class ProfileService {
         if (password != null) {
             optionalUser.get().setPassword(password);
         }
-        usersRepository.save(optionalUser.get());
+        userRepository.save(optionalUser.get());
         profileResponse.setResult(true);
         return profileResponse;
     }
 
-    private HashMap<String, String> checkProfileErrors(ProfileRequest profile, Optional<Users> optionalUser) {
+    private HashMap<String, String> checkProfileErrors(ProfileRequest profile, Optional<User> optionalUser) {
         HashMap<String, String> errors = new HashMap<>();
         if (profile.getEmail() != null) {
             if (!checkEmail(profile.getEmail(), optionalUser)) {
@@ -137,7 +137,7 @@ public class ProfileService {
         return errors;
     }
 
-    private HashMap<String, String> checkProfileWithPhotoErrors(ProfileRequestWithPhoto profile, Optional<Users> optionalUser) {
+    private HashMap<String, String> checkProfileWithPhotoErrors(ProfileRequestWithPhoto profile, Optional<User> optionalUser) {
         HashMap<String, String> errors = new HashMap<>();
         if (profile.getEmail() != null) {
             if (!checkEmail(profile.getEmail(), optionalUser)) {
@@ -163,7 +163,7 @@ public class ProfileService {
         return errors;
     }
 
-    private boolean checkEmail(String email, Optional<Users> optionalUser) {
+    private boolean checkEmail(String email, Optional<User> optionalUser) {
         if (email.equals(optionalUser.get().getEmail())) {
             return false;
         } else {

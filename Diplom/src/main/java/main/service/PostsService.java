@@ -42,19 +42,19 @@ public class PostsService {
 
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private PostVotesRepository postVotesRepository;
 
     @Autowired
-    private PostCommentsRepository postCommentsRepository;
+    private PostCommentRepository postCommentRepository;
 
     @Autowired
-    private TagsRepository tagsRepository;
+    private TagRepository tagRepository;
 
 
     public CountPostsResponse getPosts(int offset, int limit, String mode) {
@@ -62,8 +62,8 @@ public class PostsService {
 
         List<PostsResponse> postsList = new ArrayList<>();
 
-        Iterable<Posts> postsIterable = postsRepository.findAll();
-        for (Posts post : postsIterable) {
+        Iterable<Post> postsIterable = postRepository.findAll();
+        for (Post post : postsIterable) {
             if (post.getIsActive() == ACTIVE_POST & post.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
                 PostsResponse postsResponse = new PostsResponse();
                 postsList.add(getPostsResponse(post, postsResponse));
@@ -105,30 +105,30 @@ public class PostsService {
     public CountPostsResponse searchTags(int offset, int limit, String tag) {
 
         List<PostsResponse> postsList = new ArrayList<>();
-        HashSet<Posts> postsL = new HashSet<>();
+        HashSet<Post> postL = new HashSet<>();
         if (tag.contains(",")) {
             String[] tagsFragment = tag.split(",");
-            Iterable<Tags> tagsIterable = tagsRepository.findAll();
-            for (Tags f : tagsIterable) {
+            Iterable<Tag> tagsIterable = tagRepository.findAll();
+            for (Tag f : tagsIterable) {
                 for (String q : tagsFragment) {
                     if (q.equals(f.getName())) {
-                        postsL.addAll(f.getPosts());
+                        postL.addAll(f.getPosts());
                     }
                 }
             }
         } else {
-            Iterable<Tags> tagsIterable = tagsRepository.findAll();
-            for (Tags f : tagsIterable) {
+            Iterable<Tag> tagsIterable = tagRepository.findAll();
+            for (Tag f : tagsIterable) {
                 if (tag.equals(f.getName())) {
-                    postsL.addAll(f.getPosts());
+                    postL.addAll(f.getPosts());
                 }
             }
         }
-        Iterable<Posts> postsIterable = postsRepository.findAll();
-        for (Posts post : postsIterable) {
+        Iterable<Post> postsIterable = postRepository.findAll();
+        for (Post post : postsIterable) {
             if (post.getIsActive() == ACTIVE_POST & post.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
                 PostsResponse postsResponse = new PostsResponse();
-                for (Posts s : postsL) {
+                for (Post s : postL) {
                     if (post.getId() == s.getId()) {
                         postsList.add(getPostsResponse(post, postsResponse));
                     }
@@ -143,8 +143,8 @@ public class PostsService {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
         List<PostsResponse> postsList = new ArrayList<>();
-        Iterable<Posts> postsIterable = postsRepository.findAll();
-        for (Posts post : postsIterable) {
+        Iterable<Post> postsIterable = postRepository.findAll();
+        for (Post post : postsIterable) {
             if (post.getIsActive() == ACTIVE_POST & post.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
 
                 PostsResponse postsResponse = new PostsResponse();
@@ -157,22 +157,22 @@ public class PostsService {
         return getCountPostsResponse(postsList, offset, limit);
     }
 
-    public CountPostsResponse getModerationPosts(Optional<Users> optionalModer, int offset, int limit, String status) {
+    public CountPostsResponse getModerationPosts(Optional<User> optionalModer, int offset, int limit, String status) {
 
         int idModer = optionalModer.get().getId();
 
         List<PostsResponse> postsList = new ArrayList<>();
 
-        Iterable<Posts> postsIterable = postsRepository.findAll();
-        for (Posts post : postsIterable) {
+        Iterable<Post> postsIterable = postRepository.findAll();
+        for (Post post : postsIterable) {
             PostsResponse postsResponse = new PostsResponse();
             if (status.equals(STATUS_NEW)) {
-//                Optional<Posts> optionalPosts = postsRepository.findById(post.getId());
+//                Optional<Post> optionalPosts = postRepository.findById(post.getId());
                 if (post.getIsActive() == ACTIVE_POST & post.getModerationStatus().toString().equals(MODERATION_NEW)) {
                     postsList.add(getPostsResponse(post, postsResponse));
                 }
             } else if (status.equals(STATUS_DECLINED)) {
-//                Optional<Posts> optionalPosts = postsRepository.findById(post.getId());
+//                Optional<Post> optionalPosts = postRepository.findById(post.getId());
 
                 if (idModer == post.getModeratorId()) {
                     if (post.getModerationStatus().toString().equals(MODERATION_DECLINED)) {
@@ -180,7 +180,7 @@ public class PostsService {
                     }
                 }
             } else if (status.equals(STATUS_ACCEPTED)) {
-//                Optional<Posts> optionalPosts = postsRepository.findById(post.getId());
+//                Optional<Post> optionalPosts = postRepository.findById(post.getId());
                 if (idModer == post.getModeratorId()) {
                     if (post.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
                         postsList.add(getPostsResponse(post, postsResponse));
@@ -191,14 +191,14 @@ public class PostsService {
         return getCountPostsResponse(postsList, offset, limit);
     }
 
-    public CountPostsResponse getMyPosts(Optional<Users> optionalUser, int offset, int limit, String status) {
+    public CountPostsResponse getMyPosts(Optional<User> optionalUser, int offset, int limit, String status) {
 
         int idUser = optionalUser.get().getId();
 
         List<PostsResponse> postsList = new ArrayList<>();
 
-        Iterable<Posts> postsIterable = postsRepository.findAll();
-        for (Posts post : postsIterable) {
+        Iterable<Post> postsIterable = postRepository.findAll();
+        for (Post post : postsIterable) {
             if (idUser == post.getUser().getId()) {
                 PostsResponse postsResponse = new PostsResponse();
 
@@ -233,8 +233,8 @@ public class PostsService {
     public CountPostsResponse searchPosts(int offset, int limit, String query) {
 
         List<PostsResponse> postsList = new ArrayList<>();
-        Iterable<Posts> postsIterable = postsRepository.findAll();
-        for (Posts post : postsIterable) {
+        Iterable<Post> postsIterable = postRepository.findAll();
+        for (Post post : postsIterable) {
 
             if (post.getIsActive() == ACTIVE_POST & post.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
                 String cleanText = Jsoup.clean(post.getText(), Whitelist.none());
@@ -261,14 +261,14 @@ public class PostsService {
     }
 
 
-    private PostsResponse getPostsResponse(Posts post, PostsResponse postsResponse) {
+    private PostsResponse getPostsResponse(Post post, PostsResponse postsResponse) {
 
         postsResponse.setId(post.getId());
         Date date = post.getTime();
         long timestamp = date.getTime() / 1000;
         postsResponse.setTimestamp(timestamp);
         UserResponse userResponse = new UserResponse();
-        Optional<Users> optionalUser = usersRepository.findById(post.getUser().getId());
+        Optional<User> optionalUser = userRepository.findById(post.getUser().getId());
         userResponse.setName(optionalUser.get().getName());
         userResponse.setId(optionalUser.get().getId());
         postsResponse.setUser(userResponse);
@@ -299,8 +299,8 @@ public class PostsService {
         postsResponse.setDislikeCount(dislikeList.size());
 
         List commentList = new ArrayList();
-        Iterable<PostComments> postCommentsIterable = postCommentsRepository.findAll();
-        for (PostComments com : postCommentsIterable) {
+        Iterable<PostComment> postCommentsIterable = postCommentRepository.findAll();
+        for (PostComment com : postCommentsIterable) {
             if (post.getId() == com.getPostId()) {
                 commentList.add(com.getId());
             }

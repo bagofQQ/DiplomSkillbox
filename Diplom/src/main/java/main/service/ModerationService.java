@@ -15,17 +15,17 @@ public class ModerationService {
     private static final String DECLINE = "decline";
 
     @Autowired
-    private UsersRepository usersRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    private PostsRepository postsRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private HttpSession httpSession;
 
-    public ModerationResponse getMod(int postId, String decision, Optional<Users> optionalUser) {
+    public ModerationResponse getMod(int postId, String decision, Optional<User> optionalUser) {
         ModerationResponse moderationResponse = new ModerationResponse();
-        Optional<Posts> optionalPosts = postsRepository.findById(postId);
+        Optional<Post> optionalPosts = postRepository.findById(postId);
         int id = optionalUser.get().getId();
 
         if (decision.equals(ACCEPT)) {
@@ -37,7 +37,7 @@ public class ModerationService {
             Date dateMod = calendar.getTime();
             optionalPosts.get().setTime(dateMod);
 
-            postsRepository.save(optionalPosts.get());
+            postRepository.save(optionalPosts.get());
             moderationResponse.setResult(true);
             return moderationResponse;
         } else if (decision.equals(DECLINE)) {
@@ -49,7 +49,7 @@ public class ModerationService {
             Date dateMod = calendar.getTime();
             optionalPosts.get().setTime(dateMod);
 
-            postsRepository.save(optionalPosts.get());
+            postRepository.save(optionalPosts.get());
             moderationResponse.setResult(true);
             return moderationResponse;
         }
