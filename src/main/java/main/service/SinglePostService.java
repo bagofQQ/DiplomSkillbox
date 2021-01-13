@@ -1,12 +1,16 @@
 package main.service;
 
+import main.PostsException;
 import main.api.response.posts.UserResponse;
-import main.api.response.singlepost.*;
+import main.api.response.singlepost.SingleCommentInfoResponse;
+import main.api.response.singlepost.SinglePostResponse;
+import main.api.response.singlepost.UserPhotoResponse;
 import main.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -30,24 +34,16 @@ public class SinglePostService {
     @Autowired
     private PostCommentRepository postCommentRepository;
 
-
+    @Transactional
     public ResponseEntity<SinglePostResponse> getSinglePost(int id, String identifier, HashMap<String, Integer> identifierMap) {
-
-        Optional<Post> optionalPost = postRepository.findById(id);
-        if (optionalPost.isPresent()) {
-            if (optionalPost.get().getIsActive() == ACTIVE_POST & optionalPost.get().getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
-                return new ResponseEntity(singlPostRecording(identifierMap, identifier,optionalPost, true), HttpStatus.OK);
-            }
-            return new ResponseEntity(singlPostRecording(identifierMap, identifier,optionalPost, true), HttpStatus.OK);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-
+        Post post = postRepository.findById(id).orElseThrow(PostsException::new);
+        return new ResponseEntity<>(singlPostRecording(identifierMap, identifier, post), HttpStatus.OK);
     }
 
-    private SinglePostResponse singlPostRecording(HashMap<String, Integer> identifierMap, String identifier, Optional<Post> optionalPost, boolean active) {
+    private SinglePostResponse singlPostRecording(HashMap<String, Integer> identifierMap, String identifier, Post post) {
         SinglePostResponse singlePostResponse = new SinglePostResponse();
         UserResponse userResponse = new UserResponse();
-        Optional<User> optionalUserAuthor = userRepository.findById(optionalPost.get().getUser().getId());
+        Optional<User> optionalUserAuthor = userRepository.findById(post.getUser().getId());
         userResponse.setName(optionalUserAuthor.get().getName());
         userResponse.setId(optionalUserAuthor.get().getId());
 
@@ -56,22 +52,21 @@ public class SinglePostService {
             int q = identifierMap.get(identifier);
             Optional<User> optionalUser = userRepository.findById(q);
             if (optionalUser.get().getIsModerator() == USER) {
-                if (optionalPost.get().getUser().getId() != optionalUser.get().getId()) {
-                    optionalPost.get().setViewCount(optionalPost.get().getViewCount() + 1);
-                    postRepository.save(optionalPost.get());
+                if (post.getUser().getId() != optionalUser.get().getId()) {
+                    post.setViewCount(post.getViewCount() + 1);
+                    postRepository.save(post);
                 }
             }
         } else if (!identifierMap.containsKey(identifier)) {
-            optionalPost.get().setViewCount(optionalPost.get().getViewCount() + 1);
-            postRepository.save(optionalPost.get());
+            post.setViewCount(post.getViewCount() + 1);
+            postRepository.save(post);
         }
 
-
-        singlePostResponse.setId(optionalPost.get().getId());
+        singlePostResponse.setId(post.getId());
 
         Calendar calendar = Calendar.getInstance();
         Date date = calendar.getTime();
-        Date dateSinglePost = optionalPost.get().getTime();
+        Date dateSinglePost = post.getTime();
 
         if (dateSinglePost.before(date)) {
             long timestamp = dateSinglePost.getTime() / 1000;
@@ -80,26 +75,25 @@ public class SinglePostService {
             long timestamp = date.getTime() / 1000;
             singlePostResponse.setTimestamp(timestamp);
         }
-
-
-        singlePostResponse.setActive(active);
+        singlePostResponse.setActive(true);
         singlePostResponse.setUser(userResponse);
 
-        singlePostResponse.setTitle(optionalPost.get().getTitle());
-        singlePostResponse.setText(optionalPost.get().getText());
+        singlePostResponse.setTitle(post.getTitle());
+        singlePostResponse.setText(post.getText());
 
-        List<PostVotes> likeList = postVotesRepository.findLike(optionalPost.get().getId());
-        List<PostVotes> dislikeList = postVotesRepository.findDislike(optionalPost.get().getId());
+        List<PostVotes> likeList = postVotesRepository.findLike(post.getId());
+        List<PostVotes> dislikeList = postVotesRepository.findDislike(post.getId());
+
         singlePostResponse.setLikeCount(likeList.size());
         singlePostResponse.setDislikeCount(dislikeList.size());
-        singlePostResponse.setViewCount(optionalPost.get().getViewCount());
 
+        singlePostResponse.setViewCount(post.getViewCount());
 
         List<SingleCommentInfoResponse> sCommentList = new ArrayList<>();
 
-        List<PostComment> commentList = postCommentRepository.findComment(optionalPost.get().getId());
-        for(PostComment f : commentList){
-            if (optionalPost.get().getId() == f.getPostId()) {
+        List<PostComment> commentList = postCommentRepository.findComment(post.getId());
+        for (PostComment f : commentList) {
+            if (post.getId() == f.getPostId()) {
                 Optional<User> optionalUsersComment = userRepository.findById(f.getUser().getId());
                 UserPhotoResponse us = new UserPhotoResponse();
                 us.setId(optionalUsersComment.get().getId());
@@ -117,19 +111,15 @@ public class SinglePostService {
                 sCommentList.add(sComment);
             }
         }
-
         singlePostResponse.setComments(sCommentList);
 
-        SinglePostTagsResponse tags = new SinglePostTagsResponse();
         List<String> tagsList = new ArrayList();
-        optionalPost.get().getTags().forEach(tags1 -> {
+
+        post.getTags().forEach(tags1 -> {
             tagsList.add(tags1.getName());
         });
-        tags.setTags(tagsList);
-        singlePostResponse.setTags(tags);
+        singlePostResponse.setTags(tagsList);
 
         return singlePostResponse;
-
-
     }
 }

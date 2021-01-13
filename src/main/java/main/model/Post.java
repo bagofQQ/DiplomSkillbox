@@ -21,7 +21,6 @@ public class Post {
     @Column(name = "moderator_id")
     private int moderatorId;
 
-
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName="id")
     private User user;

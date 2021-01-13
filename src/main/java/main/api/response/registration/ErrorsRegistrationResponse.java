@@ -1,16 +1,10 @@
 package main.api.response.registration;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ErrorsRegistrationResponse {
 
-    @JsonProperty("email")
     private String email;
-    @JsonProperty("name")
     private String name;
-    @JsonProperty("password")
     private String password;
-    @JsonProperty("captcha")
     private String captcha;
 
     public String getEmail() {

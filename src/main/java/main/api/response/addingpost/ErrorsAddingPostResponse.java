@@ -1,12 +1,8 @@
 package main.api.response.addingpost;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ErrorsAddingPostResponse {
 
-    @JsonProperty("title")
     private String title;
-    @JsonProperty("text")
     private String text;
 
     public String getTitle() {

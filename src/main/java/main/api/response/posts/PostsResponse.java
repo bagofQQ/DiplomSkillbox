@@ -1,26 +1,15 @@
 package main.api.response.posts;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class PostsResponse {
 
-    @JsonProperty("id")
     private int id;
-    @JsonProperty("timestamp")
     private long timestamp;
-    @JsonProperty("user")
     private UserResponse user;
-    @JsonProperty("title")
     private String title;
-    @JsonProperty("announce")
     private String announce;
-    @JsonProperty("likeCount")
     private int likeCount;
-    @JsonProperty("dislikeCount")
     private int dislikeCount;
-    @JsonProperty("commentCount")
     private int commentCount;
-    @JsonProperty("viewCount")
     private int viewCount;
 
     public int getId() {

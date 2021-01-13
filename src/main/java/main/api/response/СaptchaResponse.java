@@ -1,12 +1,8 @@
 package main.api.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class СaptchaResponse {
 
-    @JsonProperty("secret")
     private String secret;
-    @JsonProperty("image")
     private String image;
 
     public String getSecret() {

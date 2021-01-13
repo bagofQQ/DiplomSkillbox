@@ -1,16 +1,10 @@
 package main.api.response.profile;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ErrorsProfileResponse {
 
-    @JsonProperty("email")
     private String email;
-    @JsonProperty("name")
     private String name;
-    @JsonProperty("password")
     private String password;
-    @JsonProperty("photo")
     private String photo;
 
     public String getEmail() {

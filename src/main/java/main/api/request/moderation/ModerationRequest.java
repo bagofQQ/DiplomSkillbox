@@ -6,7 +6,6 @@ public class ModerationRequest {
 
     @JsonProperty("post_id")
     private int postId;
-    @JsonProperty("decision")
     private String decision;
 
     public int getPostId() {

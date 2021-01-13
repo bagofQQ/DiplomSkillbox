@@ -1,14 +1,10 @@
 package main.api.response.posts;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
 public class CountPostsResponse {
 
-    @JsonProperty("count")
     private int count;
-    @JsonProperty("posts")
     private List<PostsResponse> posts;
 
     public int getCount() {

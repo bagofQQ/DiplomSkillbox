@@ -9,7 +9,7 @@ import java.io.File;
 
 @Configuration
 @EnableWebMvc
-public class MvcConfig implements WebMvcConfigurer{
+public class MvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -30,17 +30,5 @@ public class MvcConfig implements WebMvcConfigurer{
                 .addResourceLocations("file:///" + avatars.getAbsolutePath() + "/");
         registry.addResourceHandler("/post/avatars/**")
                 .addResourceLocations("file:///" + avatars.getAbsolutePath() + "/");
-
-//        registry.addResourceHandler("/upload/**")
-//                .addResourceLocations("file:///E:/github/DiplomSkillbox/Diplom/upload/");
-//        registry.addResourceHandler("/post/upload/**")
-//                .addResourceLocations("file:///E:/github/DiplomSkillbox/Diplom/upload/");
-//
-//        registry.addResourceHandler("/avatars/**")
-//                .addResourceLocations("file:///E:/github/DiplomSkillbox/Diplom/avatars/");
-//        registry.addResourceHandler("/posts/avatars/**")
-//                .addResourceLocations("file:///E:/github/DiplomSkillbox/Diplom/avatars/");
-//        registry.addResourceHandler("/post/avatars/**")
-//                .addResourceLocations("file:///E:/github/DiplomSkillbox/Diplom/avatars/");
     }
 }

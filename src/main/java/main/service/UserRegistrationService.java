@@ -90,19 +90,25 @@ public class UserRegistrationService {
     }
 
     private boolean checkEmail(String email) {
-        Iterable<User> usersIterable = userRepository.findAll();
-        if (usersIterable.iterator().hasNext()) {
-            for (User q : usersIterable) {
-                Optional<User> optionalUsers = userRepository.findById(q.getId());
-                if (email.equals(optionalUsers.get().getEmail())) {
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-        } else {
-            return true;
+        int countFindUser = userRepository.countFindUser(email);
+        if(countFindUser > 0){
+            return false;
         }
-        return false;
+        return true;
+
+//        Iterable<User> usersIterable = userRepository.findAll();
+//        if (usersIterable.iterator().hasNext()) {
+//            for (User q : usersIterable) {
+//                Optional<User> optionalUsers = userRepository.findById(q.getId());
+//                if (email.equals(optionalUsers.get().getEmail())) {
+//                    return false;
+//                } else {
+//                    return true;
+//                }
+//            }
+//        } else {
+//            return true;
+//        }
+//        return false;
     }
 }

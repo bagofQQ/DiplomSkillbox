@@ -1,10 +1,7 @@
 package main.api.response.comment;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ErrorsCommentResponse {
 
-    @JsonProperty("text")
     private String text;
 
     public String getText() {

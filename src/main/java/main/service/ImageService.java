@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Random;
 
 @Service
@@ -45,10 +44,6 @@ public class ImageService {
         String folder1 = folderCode.substring(0, 2);
         String folder2 = folderCode.substring(2, 4);
         String folder3 = folderCode.substring(4, 6);
-
-//        File file = new File("upload");
-//        String abs = file.getAbsolutePath();
-//        System.out.println(abs);
 
         Path path = Path.of(FOLDER_INPUT_IMAGE + "/" + folder1 + "/" + folder2 + "/" + folder3);
         if (Files.exists(path)) {

@@ -46,9 +46,9 @@ public class ApiPostController {
 
     @GetMapping("/api/post")
     public ResponseEntity<CountPostsResponse> post(
-            @RequestParam int offset,
-            @RequestParam int limit,
-            @RequestParam String mode) {
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false, defaultValue = "10") int limit,
+            @RequestParam(required = false, defaultValue = "recent") String mode) {
         return new ResponseEntity(postsService.getPosts(offset, limit, mode), HttpStatus.OK);
     }
 

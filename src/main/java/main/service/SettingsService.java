@@ -2,7 +2,8 @@ package main.service;
 
 import main.api.request.SettingsRequest;
 import main.api.response.SettingsResponse;
-import main.model.*;
+import main.model.GlobalSettings;
+import main.model.GlobalSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

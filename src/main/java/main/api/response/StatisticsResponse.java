@@ -1,18 +1,11 @@
 package main.api.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class StatisticsResponse {
 
-    @JsonProperty("postsCount")
     private int postsCount;
-    @JsonProperty("likesCount")
     private int likesCount;
-    @JsonProperty("dislikesCount")
     private int dislikesCount;
-    @JsonProperty("viewsCount")
     private int viewsCount;
-    @JsonProperty("firstPublication")
     private long firstPublication;
 
     public int getPostsCount() {

@@ -6,7 +6,6 @@ public class UserLoginRequest {
 
     @JsonProperty("e_mail")
     private String email;
-    @JsonProperty("password")
     private String password;
 
     public String getEmail() {

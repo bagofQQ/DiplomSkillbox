@@ -21,27 +21,24 @@ public class CalendarService {
         CalendarResponse calendarResponse = new CalendarResponse();
 
         TreeSet<Integer> years = new TreeSet<>();
+        Calendar calendar = Calendar.getInstance();
+        int yearCalendar = calendar.get(1);
+
+        years.add(yearCalendar);
+        years.add(yearCalendar - 1);
         TreeMap<String, Integer> posts = new TreeMap<>();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-        Iterable<Post> postsIterable = postRepository.findAll();
-        for (Post f : postsIterable) {
-            Calendar postDate = new GregorianCalendar();
-            postDate.setTime(f.getTime());
-            years.add(postDate.get(1));
-
+        List<Post> postList = postRepository.findCalendarYear(year);
+        for (Post f : postList) {
             Date date = f.getTime();
-            List<Integer> countDateList = new ArrayList<>();
-            for (Post q : postsIterable) {
-                if (dateFormat.format(date).equals(dateFormat.format(q.getTime()))) {
-                    countDateList.add(q.getId());
-                }
-            }
-
-            posts.put(dateFormat.format(date), countDateList.size());
+            int countDate = postRepository.countDate(dateFormat.format(date));
+            posts.put(dateFormat.format(date), countDate);
         }
+
         calendarResponse.setYears(years);
         calendarResponse.setPosts(new JSONObject(posts));
         return calendarResponse;
     }
+
 }

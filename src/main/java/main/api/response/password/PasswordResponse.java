@@ -1,13 +1,8 @@
 package main.api.response.password;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class PasswordResponse {
 
-    @JsonProperty("result")
     private boolean result;
-
-    @JsonProperty("errors")
     private ErrorsPasswordResponse errors;
 
     public boolean isResult() {

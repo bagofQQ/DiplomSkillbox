@@ -8,7 +8,6 @@ public class CommentRequest {
     private int parentId;
     @JsonProperty("post_id")
     private int postId;
-    @JsonProperty("text")
     private String text;
 
     public int getParentId() {

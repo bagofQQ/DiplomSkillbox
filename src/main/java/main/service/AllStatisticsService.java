@@ -57,110 +57,104 @@ public class AllStatisticsService {
     public StatisticsResponse getAllStat() {
         StatisticsResponse statisticsResponse = new StatisticsResponse();
 
-        List postList = new ArrayList();
-        List<Integer> viewsList = new ArrayList();
-        List<Long> publicationTimeList = new ArrayList();
-        List likeList = new ArrayList();
-        List dislikeList = new ArrayList();
-
-        Iterable<Post> postsIterable = postRepository.findAll();
-        if (postsIterable.iterator().hasNext()) {
-            for (Post f : postsIterable) {
-                if (f.getIsActive() == ACTIVE_POST & f.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
-                    postList.add(f.getId());
-                    viewsList.add(f.getViewCount());
-                    Date date = f.getTime();
-                    long timestamp = date.getTime() / 1000;
-                    publicationTimeList.add(timestamp);
-                }
-            }
-            if (viewsList.size() > 0 & publicationTimeList.size() > 0) {
-                int viewsCount = viewsList.stream().mapToInt(Integer::intValue).sum();
-                long firstPublication = publicationTimeList.stream().sorted().findFirst().get();
-                statisticsResponse.setViewsCount(viewsCount);
-                statisticsResponse.setFirstPublication(firstPublication);
-            } else {
-                statisticsResponse.setViewsCount(0);
-            }
-
-            Iterable<PostVotes> postVotesIterable = postVotesRepository.findAll();
-            for (PostVotes pv : postVotesIterable) {
-                if (pv.getValue() == LIKE) {
-                    likeList.add(pv.getId());
-                } else if (pv.getValue() == DISLIKE) {
-                    dislikeList.add(pv.getId());
-                }
-            }
-
-            statisticsResponse.setPostsCount(postList.size());
-            statisticsResponse.setLikesCount(likeList.size());
-            statisticsResponse.setDislikesCount(dislikeList.size());
-
+        int countActivePosts = postRepository.countActivePosts();
+        int viewCount = postRepository.viewCount();
+        int countLike = postVotesRepository.countLike();
+        int countDislike = postVotesRepository.countDislike();
+        Date firstDate = postRepository.earlyDate();
+        if(firstDate == null){
+            statisticsResponse.setPostsCount(countActivePosts);
+            statisticsResponse.setLikesCount(countLike);
+            statisticsResponse.setDislikesCount(countDislike);
+            statisticsResponse.setViewsCount(viewCount);
             return statisticsResponse;
         }
-
-        statisticsResponse.setPostsCount(postList.size());
-        statisticsResponse.setLikesCount(likeList.size());
-        statisticsResponse.setDislikesCount(dislikeList.size());
-        statisticsResponse.setViewsCount(0);
+        long firstPublication = firstDate.getTime() / 1000;
+        statisticsResponse.setPostsCount(countActivePosts);
+        statisticsResponse.setLikesCount(countLike);
+        statisticsResponse.setDislikesCount(countDislike);
+        statisticsResponse.setFirstPublication(firstPublication);
+        statisticsResponse.setViewsCount(viewCount);
         return statisticsResponse;
     }
 
     public StatisticsResponse getUserStat(int idUser) {
         StatisticsResponse statisticsResponse = new StatisticsResponse();
 
-        List postList = new ArrayList();
-        List<Integer> viewsList = new ArrayList();
-        List<Long> publicationTimeList = new ArrayList();
-        List likeList = new ArrayList();
-        List dislikeList = new ArrayList();
-
-        Iterable<Post> postsIterable = postRepository.findAll();
-        if (postsIterable.iterator().hasNext()) {
-            for (Post f : postsIterable) {
-                if (f.getIsActive() == ACTIVE_POST & f.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
-                    if (idUser == f.getUser().getId()) {
-                        postList.add(f.getId());
-                        viewsList.add(f.getViewCount());
-                        Date date = f.getTime();
-                        long timestamp = date.getTime() / 1000;
-                        publicationTimeList.add(timestamp);
-                    }
-                }
-            }
-            if (viewsList.size() > 0 & publicationTimeList.size() > 0) {
-                int viewsCount = viewsList.stream().mapToInt(Integer::intValue).sum();
-                long firstPublication = publicationTimeList.stream().sorted().findFirst().get();
-                statisticsResponse.setViewsCount(viewsCount);
-                statisticsResponse.setFirstPublication(firstPublication);
-            } else {
-                statisticsResponse.setViewsCount(0);
-            }
-
-            Iterable<PostVotes> postVotesIterable = postVotesRepository.findAll();
-            for (PostVotes pv : postVotesIterable) {
-                if (idUser == pv.getUser().getId()) {
-                    if (pv.getValue() == LIKE) {
-                        likeList.add(pv.getId());
-                    } else if (pv.getValue() == DISLIKE) {
-                        dislikeList.add(pv.getId());
-                    }
-                }
-            }
-
-            statisticsResponse.setPostsCount(postList.size());
-            statisticsResponse.setLikesCount(likeList.size());
-            statisticsResponse.setDislikesCount(dislikeList.size());
-
+        int countActivePosts = postRepository.countActivePostsUser(idUser);
+        int viewCount = postRepository.viewCountUser(idUser);
+        int countLike = postVotesRepository.countLikeUser(idUser);
+        int countDislike = postVotesRepository.countDislikeUser(idUser);
+        Date firstDate = postRepository.earlyDateUser(idUser);
+        if(firstDate == null){
+            statisticsResponse.setPostsCount(countActivePosts);
+            statisticsResponse.setLikesCount(countLike);
+            statisticsResponse.setDislikesCount(countDislike);
+            statisticsResponse.setViewsCount(viewCount);
             return statisticsResponse;
         }
 
-        statisticsResponse.setPostsCount(postList.size());
-        statisticsResponse.setLikesCount(likeList.size());
-        statisticsResponse.setDislikesCount(dislikeList.size());
-        statisticsResponse.setViewsCount(0);
-
+        long firstPublication = firstDate.getTime() / 1000;
+        statisticsResponse.setPostsCount(countActivePosts);
+        statisticsResponse.setLikesCount(countLike);
+        statisticsResponse.setDislikesCount(countDislike);
+        statisticsResponse.setFirstPublication(firstPublication);
+        statisticsResponse.setViewsCount(viewCount);
         return statisticsResponse;
+
+
+//        List postList = new ArrayList();
+//        List<Integer> viewsList = new ArrayList();
+//        List<Long> publicationTimeList = new ArrayList();
+//        List likeList = new ArrayList();
+//        List dislikeList = new ArrayList();
+//
+//        Iterable<Post> postsIterable = postRepository.findAll();
+//        if (postsIterable.iterator().hasNext()) {
+//            for (Post f : postsIterable) {
+//                if (f.getIsActive() == ACTIVE_POST & f.getModerationStatus().toString().equals(MODERATION_ACCEPTED)) {
+//                    if (idUser == f.getUser().getId()) {
+//                        postList.add(f.getId());
+//                        viewsList.add(f.getViewCount());
+//                        Date date = f.getTime();
+//                        long timestamp = date.getTime() / 1000;
+//                        publicationTimeList.add(timestamp);
+//                    }
+//                }
+//            }
+//            if (viewsList.size() > 0 & publicationTimeList.size() > 0) {
+//                int viewsCount = viewsList.stream().mapToInt(Integer::intValue).sum();
+//                long firstPublication = publicationTimeList.stream().sorted().findFirst().get();
+//                statisticsResponse.setViewsCount(viewsCount);
+//                statisticsResponse.setFirstPublication(firstPublication);
+//            } else {
+//                statisticsResponse.setViewsCount(0);
+//            }
+//
+//            Iterable<PostVotes> postVotesIterable = postVotesRepository.findAll();
+//            for (PostVotes pv : postVotesIterable) {
+//                if (idUser == pv.getUser().getId()) {
+//                    if (pv.getValue() == LIKE) {
+//                        likeList.add(pv.getId());
+//                    } else if (pv.getValue() == DISLIKE) {
+//                        dislikeList.add(pv.getId());
+//                    }
+//                }
+//            }
+//
+//            statisticsResponse.setPostsCount(postList.size());
+//            statisticsResponse.setLikesCount(likeList.size());
+//            statisticsResponse.setDislikesCount(dislikeList.size());
+//
+//            return statisticsResponse;
+//        }
+//
+//        statisticsResponse.setPostsCount(postList.size());
+//        statisticsResponse.setLikesCount(likeList.size());
+//        statisticsResponse.setDislikesCount(dislikeList.size());
+//        statisticsResponse.setViewsCount(0);
+//
+//        return statisticsResponse;
     }
 
     private boolean checkSettings(String code, Iterable<GlobalSettings> globalSettingsIterable) {

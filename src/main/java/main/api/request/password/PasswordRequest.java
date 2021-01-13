@@ -4,11 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PasswordRequest {
 
-    @JsonProperty("code")
     private String code;
-    @JsonProperty("password")
     private String password;
-    @JsonProperty("captcha")
     private String captcha;
     @JsonProperty("captcha_secret")
     private String captchaSecret;

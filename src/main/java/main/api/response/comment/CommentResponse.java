@@ -1,14 +1,9 @@
 package main.api.response.comment;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class CommentResponse {
 
-    @JsonProperty("id")
     private int id;
-    @JsonProperty("result")
     private boolean result;
-    @JsonProperty("errors")
     private ErrorsCommentResponse errors;
 
     public int getId() {

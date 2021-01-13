@@ -26,7 +26,7 @@ public class PostsService {
     private static final String STATUS_MYPOST_PENDING = "pending";
     private static final String STATUS_MYPOST_DECLINED = "declined";
     private static final String STATUS_MYPOST_PUBLISHED = "published";
-    
+
     private static final String MODERATION_NEW = "NEW";
     private static final String MODERATION_ACCEPTED = "ACCEPTED";
     private static final String MODERATION_DECLINED = "DECLINED";
@@ -59,19 +59,25 @@ public class PostsService {
         List<PostsResponse> postsList = new ArrayList<>();
         int offsetPageable = offset / 10;
 
-        if (mode.equals(MODE_EARLY)) {
-            Page<Post> page = postRepository.findEarlyPosts(getDateNow(), getPageable(offsetPageable, limit));
-            addPostsList(page, postsList);
-        } else if (mode.equals(MODE_POPULAR)) {
-            Page<Post> page = postRepository.findPopularPosts(getDateNow(), getPageable(offsetPageable, limit));
-            addPostsList(page, postsList);
-        } else if (mode.equals(MODE_BEST)) {
-            Page<Post> page = postRepository.findBestPosts(getDateNow(), getPageable(offsetPageable, limit));
-            addPostsList(page, postsList);
-        } else if (mode.equals(MODE_RECENT)) {
-            Page<Post> page = postRepository.findResentPosts(getDateNow(), getPageable(offsetPageable, limit));
-            addPostsList(page, postsList);
+        Page<Post> page;
+
+        switch (mode) {
+            case MODE_EARLY:
+                page = postRepository.findEarlyPosts(getDateNow(), getPageable(offsetPageable, limit));
+                break;
+            case MODE_POPULAR:
+                page = postRepository.findPopularPosts(getDateNow(), getPageable(offsetPageable, limit));
+                break;
+            case MODE_BEST:
+                page = postRepository.findBestPosts(getDateNow(), getPageable(offsetPageable, limit));
+                break;
+            default:
+                page = postRepository.findResentPosts(getDateNow(), getPageable(offsetPageable, limit));
+                break;
         }
+
+        addPostsList(page, postsList);
+
         countPostsResponse.setCount(postRepository.countActivePosts());
         countPostsResponse.setPosts(postsList);
         return countPostsResponse;
@@ -85,21 +91,11 @@ public class PostsService {
 
         int offsetPageable = offset / 10;
 
-        if (tag.contains(",")) {
-            String[] tagsFragment = tag.split(",");
-            for (String tagFragment : tagsFragment) {
-                int idTag = postRepository.idTag(tagFragment);
-                Page<Post> page = postRepository.findTagPosts(getDateNow(), idTag, getPageable(offsetPageable, limit));
-                addPostsList(page, postsList);
-                countPostsResponse.setCount(postsList.size());
-                countPostsResponse.setPosts(postsList);
-                return countPostsResponse;
-            }
-        }
         int idTag = postRepository.idTag(tag);
         Page<Post> page = postRepository.findTagPosts(getDateNow(), idTag, getPageable(offsetPageable, limit));
         addPostsList(page, postsList);
-        countPostsResponse.setCount(postsList.size());
+
+        countPostsResponse.setCount(postRepository.countTagPosts(idTag));
         countPostsResponse.setPosts(postsList);
         return countPostsResponse;
 
@@ -112,7 +108,8 @@ public class PostsService {
         int offsetPageable = offset / 10;
         Page<Post> page = postRepository.findDatePosts(getDateNow(), dateString, getPageable(offsetPageable, limit));
         addPostsList(page, postsList);
-        countPostsResponse.setCount(postsList.size());
+
+        countPostsResponse.setCount(postRepository.countDate(dateString));
         countPostsResponse.setPosts(postsList);
         return countPostsResponse;
     }
@@ -126,15 +123,16 @@ public class PostsService {
         if (status.equals(STATUS_NEW)) {
             Page<Post> page = postRepository.findModerationPostsNew(getDateNow(), MODERATION_NEW, getPageable(offsetPageable, limit));
             addPostsList(page, postsList);
+            countPostsResponse.setCount(postRepository.countModStatus(MODERATION_NEW));
         } else if (status.equals(STATUS_DECLINED)) {
             Page<Post> page = postRepository.findModerationPosts(getDateNow(), idModer, MODERATION_DECLINED, getPageable(offsetPageable, limit));
             addPostsList(page, postsList);
+            countPostsResponse.setCount(postRepository.countModStatus(MODERATION_DECLINED));
         } else if (status.equals(STATUS_ACCEPTED)) {
             Page<Post> page = postRepository.findModerationPosts(getDateNow(), idModer, MODERATION_ACCEPTED, getPageable(offsetPageable, limit));
             addPostsList(page, postsList);
+            countPostsResponse.setCount(postRepository.countModStatus(MODERATION_ACCEPTED));
         }
-
-        countPostsResponse.setCount(postsList.size());
         countPostsResponse.setPosts(postsList);
         return countPostsResponse;
 
@@ -149,17 +147,20 @@ public class PostsService {
         if (status.equals(STATUS_MYPOST_INACTIVE)) {
             Page<Post> page = postRepository.findMyPosts(getDateNow(), idUser, INACTIVE_POST, MODERATION_NEW, getPageable(offsetPageable, limit));
             addPostsList(page, postsList);
+            countPostsResponse.setCount(postRepository.countModStatusUser(MODERATION_NEW, INACTIVE_POST, idUser));
         } else if (status.equals(STATUS_MYPOST_DECLINED)) {
             Page<Post> page = postRepository.findMyPosts(getDateNow(), idUser, ACTIVE_POST, MODERATION_DECLINED, getPageable(offsetPageable, limit));
             addPostsList(page, postsList);
+            countPostsResponse.setCount(postRepository.countModStatusUser(MODERATION_DECLINED, ACTIVE_POST, idUser));
         } else if (status.equals(STATUS_MYPOST_PUBLISHED)) {
             Page<Post> page = postRepository.findMyPosts(getDateNow(), idUser, ACTIVE_POST, MODERATION_ACCEPTED, getPageable(offsetPageable, limit));
             addPostsList(page, postsList);
+            countPostsResponse.setCount(postRepository.countModStatusUser(MODERATION_ACCEPTED, ACTIVE_POST, idUser));
         } else if (status.equals(STATUS_MYPOST_PENDING)) {
             Page<Post> page = postRepository.findMyPosts(getDateNow(), idUser, ACTIVE_POST, MODERATION_NEW, getPageable(offsetPageable, limit));
             addPostsList(page, postsList);
+            countPostsResponse.setCount(postRepository.countModStatusUser(MODERATION_NEW, ACTIVE_POST, idUser));
         }
-        countPostsResponse.setCount(postsList.size());
         countPostsResponse.setPosts(postsList);
         return countPostsResponse;
     }
@@ -171,7 +172,7 @@ public class PostsService {
         int offsetPageable = offset / 10;
         Page<Post> page = postRepository.findSearchPosts(getDateNow(), query, getPageable(offsetPageable, limit));
         addPostsList(page, postsList);
-        countPostsResponse.setCount(postsList.size());
+        countPostsResponse.setCount(postRepository.countSearchCount(getDateNow(), query));
         countPostsResponse.setPosts(postsList);
         return countPostsResponse;
 
@@ -211,18 +212,18 @@ public class PostsService {
         return postsResponse;
     }
 
-    private Date getDateNow(){
+    private Date getDateNow() {
         Calendar calendar = Calendar.getInstance();
         Date date = calendar.getTime();
         return date;
     }
 
-    private Pageable getPageable(int offsetPageable, int limit){
+    private Pageable getPageable(int offsetPageable, int limit) {
         Pageable pageable = PageRequest.of(offsetPageable, limit);
         return pageable;
     }
 
-    private void addPostsList(Page<Post> page, List<PostsResponse> postsList){
+    private void addPostsList(Page<Post> page, List<PostsResponse> postsList) {
         for (Post post : page) {
             PostsResponse postsResponse = new PostsResponse();
             postsList.add(getPostsResponse(post, postsResponse));

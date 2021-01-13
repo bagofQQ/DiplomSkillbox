@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpSession;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,29 +36,51 @@ public class LikeDislikeService {
         PostVotes postVotes = new PostVotes();
         Optional<User> optionalUser = userRepository.findById(idUser);
 
-        Iterable<PostVotes> postVotesIterable = postVotesRepository.findAll();
-        if (postVotesIterable.iterator().hasNext()) {
-            for (PostVotes f : postVotesIterable) {
-                if (idUser == f.getUser().getId()) {
-                    if (postId == f.getPostId()) {
-                        if (LIKE == f.getValue()) {
-                            likeResponse.setResult(false);
-                            return likeResponse;
-                        } else if (DISLIKE == f.getValue()) {
-                            Optional<PostVotes> optionalPostVotes = postVotesRepository.findById(f.getId());
-                            Calendar calendar = Calendar.getInstance();
-                            Date dateLike = calendar.getTime();
-                            optionalPostVotes.get().setValue(LIKE);
-                            optionalPostVotes.get().setTime(dateLike);
-                            postVotesRepository.save(optionalPostVotes.get());
-                            likeResponse.setResult(true);
+        List<PostVotes> postVotesList = postVotesRepository.findPostVotes(postId);
+        if(postVotesList.size() > 0){
+            for(PostVotes votes : postVotesList){
+                if(idUser == votes.getUser().getId()){
+                    if(LIKE == votes.getValue()){
+                        likeResponse.setResult(false);
+                        return likeResponse;
+                    } else if(DISLIKE == votes.getValue()){
+                        Optional<PostVotes> optionalPostVotes = postVotesRepository.findById(votes.getId());
+                        Calendar calendar = Calendar.getInstance();
+                        Date dateLike = calendar.getTime();
+                        optionalPostVotes.get().setValue(LIKE);
+                        optionalPostVotes.get().setTime(dateLike);
+                        postVotesRepository.save(optionalPostVotes.get());
+                        likeResponse.setResult(true);
 
-                            return likeResponse;
-                        }
+                        return likeResponse;
                     }
                 }
             }
         }
+
+//        Iterable<PostVotes> postVotesIterable = postVotesRepository.findAll();
+//        if (postVotesIterable.iterator().hasNext()) {
+//            for (PostVotes f : postVotesIterable) {
+//                if (idUser == f.getUser().getId()) {
+//                    if (postId == f.getPostId()) {
+//                        if (LIKE == f.getValue()) {
+//                            likeResponse.setResult(false);
+//                            return likeResponse;
+//                        } else if (DISLIKE == f.getValue()) {
+//                            Optional<PostVotes> optionalPostVotes = postVotesRepository.findById(f.getId());
+//                            Calendar calendar = Calendar.getInstance();
+//                            Date dateLike = calendar.getTime();
+//                            optionalPostVotes.get().setValue(LIKE);
+//                            optionalPostVotes.get().setTime(dateLike);
+//                            postVotesRepository.save(optionalPostVotes.get());
+//                            likeResponse.setResult(true);
+//
+//                            return likeResponse;
+//                        }
+//                    }
+//                }
+//            }
+//        }
         Calendar calendar = Calendar.getInstance();
         Date dateLike = calendar.getTime();
         postVotes.setUser(optionalUser.get());
@@ -75,29 +98,52 @@ public class LikeDislikeService {
         PostVotes postVotes = new PostVotes();
         Optional<User> optionalUser = userRepository.findById(idUser);
 
-        Iterable<PostVotes> postVotesIterable = postVotesRepository.findAll();
-        if (postVotesIterable.iterator().hasNext()) {
-            for (PostVotes f : postVotesIterable) {
-                if (idUser == f.getUser().getId()) {
-                    if (postId == f.getPostId()) {
-                        if (DISLIKE == f.getValue()) {
-                            dislikeResponse.setResult(false);
-                            return dislikeResponse;
-                        } else if (LIKE == f.getValue()) {
-                            Optional<PostVotes> optionalPostVotes = postVotesRepository.findById(f.getId());
-                            Calendar calendar = Calendar.getInstance();
-                            Date dateDislike = calendar.getTime();
-                            optionalPostVotes.get().setValue(DISLIKE);
-                            optionalPostVotes.get().setTime(dateDislike);
-                            postVotesRepository.save(optionalPostVotes.get());
-                            dislikeResponse.setResult(true);
+        List<PostVotes> postVotesList = postVotesRepository.findPostVotes(postId);
+        if(postVotesList.size() > 0){
+            for(PostVotes votes : postVotesList){
+                if(idUser == votes.getUser().getId()){
+                    if (DISLIKE == votes.getValue()) {
+                        dislikeResponse.setResult(false);
+                        return dislikeResponse;
+                    } else if (LIKE == votes.getValue()) {
+                        Optional<PostVotes> optionalPostVotes = postVotesRepository.findById(votes.getId());
+                        Calendar calendar = Calendar.getInstance();
+                        Date dateDislike = calendar.getTime();
+                        optionalPostVotes.get().setValue(DISLIKE);
+                        optionalPostVotes.get().setTime(dateDislike);
+                        postVotesRepository.save(optionalPostVotes.get());
+                        dislikeResponse.setResult(true);
 
-                            return dislikeResponse;
-                        }
+                        return dislikeResponse;
                     }
                 }
             }
         }
+
+
+//        Iterable<PostVotes> postVotesIterable = postVotesRepository.findAll();
+//        if (postVotesIterable.iterator().hasNext()) {
+//            for (PostVotes f : postVotesIterable) {
+//                if (idUser == f.getUser().getId()) {
+//                    if (postId == f.getPostId()) {
+//                        if (DISLIKE == f.getValue()) {
+//                            dislikeResponse.setResult(false);
+//                            return dislikeResponse;
+//                        } else if (LIKE == f.getValue()) {
+//                            Optional<PostVotes> optionalPostVotes = postVotesRepository.findById(f.getId());
+//                            Calendar calendar = Calendar.getInstance();
+//                            Date dateDislike = calendar.getTime();
+//                            optionalPostVotes.get().setValue(DISLIKE);
+//                            optionalPostVotes.get().setTime(dateDislike);
+//                            postVotesRepository.save(optionalPostVotes.get());
+//                            dislikeResponse.setResult(true);
+//
+//                            return dislikeResponse;
+//                        }
+//                    }
+//                }
+//            }
+//        }
         Calendar calendar = Calendar.getInstance();
         Date dateDislike = calendar.getTime();
         postVotes.setUser(optionalUser.get());

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -16,8 +17,8 @@ import java.util.Properties;
 @Service
 public class RestoreService {
 
-    private String username = "";
-    private String password = "";
+    private String username = "bagcucumber347@gmail.com";
+    private String password = "juehtw347cevrf";
 
     @Autowired
     private UserRepository userRepository;
@@ -25,11 +26,10 @@ public class RestoreService {
     public RestoreResponse get(String email) {
         RestoreResponse restoreResponse = new RestoreResponse();
 
-        Iterable<User> usersIterable = userRepository.findAll();
-        for (User f : usersIterable) {
-            Optional<User> optionalUser = userRepository.findById(f.getId());
-            if (email.equals(optionalUser.get().getEmail())) {
-                String code = optionalUser.get().getCode();
+        List<User> findUserRestore = userRepository.findUserRestore(email);
+        if(findUserRestore.size() == 1){
+            for(User f : findUserRestore){
+                String code = f.getCode();
                 sendEmail(email, code);
                 restoreResponse.setResult(true);
                 return restoreResponse;
@@ -37,6 +37,19 @@ public class RestoreService {
         }
         restoreResponse.setResult(false);
         return restoreResponse;
+
+//        Iterable<User> usersIterable = userRepository.findAll();
+//        for (User f : usersIterable) {
+//            Optional<User> optionalUser = userRepository.findById(f.getId());
+//            if (email.equals(optionalUser.get().getEmail())) {
+//                String code = optionalUser.get().getCode();
+//                sendEmail(email, code);
+//                restoreResponse.setResult(true);
+//                return restoreResponse;
+//            }
+//        }
+//        restoreResponse.setResult(false);
+//        return restoreResponse;
     }
 
     private void sendEmail(String email, String code) {

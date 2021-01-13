@@ -1,13 +1,8 @@
 package main.api.response.addingpost;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class AddingPostResponse {
 
-    @JsonProperty("result")
     private boolean result;
-
-    @JsonProperty("errors")
     private ErrorsAddingPostResponse errors;
 
     public boolean isResult() {

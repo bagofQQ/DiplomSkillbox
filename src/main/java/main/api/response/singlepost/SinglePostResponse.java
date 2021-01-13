@@ -1,40 +1,22 @@
 package main.api.response.singlepost;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import main.api.response.posts.UserResponse;
 
 import java.util.List;
 
 public class SinglePostResponse {
 
-
-    @JsonProperty("id")
     private int id;
-    @JsonProperty("timestamp")
     private long timestamp;
-    @JsonProperty("active")
     private boolean active;
-    @JsonProperty("user")
     private UserResponse user;
-    @JsonProperty("title")
     private String title;
-    @JsonProperty("text")
     private String text;
-    @JsonProperty("likeCount")
     private int likeCount;
-    @JsonProperty("dislikeCount")
     private int dislikeCount;
-    @JsonProperty("viewCount")
     private int viewCount;
-    @JsonProperty("comments")
     private List<SingleCommentInfoResponse> comments;
-    @JsonProperty("tags")
-    private SinglePostTagsResponse tags;
-
-
-
-
-
+    private List<String> tags;
 
     public int getId() {
         return id;
@@ -116,13 +98,11 @@ public class SinglePostResponse {
         this.comments = comments;
     }
 
-
-    public SinglePostTagsResponse getTags() {
+    public List<String> getTags() {
         return tags;
     }
 
-    public void setTags(SinglePostTagsResponse tags) {
+    public void setTags(List<String> tags) {
         this.tags = tags;
     }
-
 }

@@ -17,7 +17,6 @@ public class CaptchaCodes {
     @Column(columnDefinition = "TEXT")
     private String code;
 
-
     @Column(name = "secret_code", columnDefinition = "TEXT")
     private String secretCode;
 

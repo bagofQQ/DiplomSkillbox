@@ -10,6 +10,7 @@ import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -80,15 +81,24 @@ public class PasswordService {
     }
 
     private boolean checkCode(String code) {
-        Iterable<User> usersIterable = userRepository.findAll();
-        for (User q : usersIterable) {
-            Optional<User> optionalUsers = userRepository.findById(q.getId());
-            if (code.equals(optionalUsers.get().getCode())) {
-                setIdUserChangePassword(optionalUsers.get().getId());
+        List<User> findUserCode = userRepository.findUserCode(code);
+        if(findUserCode.size() == 1){
+            for(User f : findUserCode){
+                setIdUserChangePassword(f.getId());
                 return true;
             }
         }
         return false;
+
+//        Iterable<User> usersIterable = userRepository.findAll();
+//        for (User q : usersIterable) {
+//            Optional<User> optionalUsers = userRepository.findById(q.getId());
+//            if (code.equals(optionalUsers.get().getCode())) {
+//                setIdUserChangePassword(optionalUsers.get().getId());
+//                return true;
+//            }
+//        }
+//        return false;
     }
 
     private int getIdUserChangePassword() {
@@ -98,6 +108,7 @@ public class PasswordService {
     private void setIdUserChangePassword(int idUserChangePassword) {
         this.idUserChangePassword = idUserChangePassword;
     }
+
 
 
 }

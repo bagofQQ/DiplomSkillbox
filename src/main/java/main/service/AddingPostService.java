@@ -71,61 +71,61 @@ public class AddingPostService {
 
     private AddingPostResponse addPost(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
 
-        if (addingPostRequest.getTitle().length() > 1) {
-            String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
-            if (cleanText.length() > 50) {
-                Calendar calendar = Calendar.getInstance();
-                Date date = calendar.getTime();
-                Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
-                if (datePost.before(date)) {
-                    return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.NEW, 0);
-                } else {
-                    return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.NEW, 0);
-                }
-            } else {
-                return postErrors(ERROR_TEXT);
-            }
+        HashMap<String, String> errors = checkAddErrors(addingPostRequest);
+        if (!errors.isEmpty()) {
+            return postErrors(errors);
         }
-        return postErrors(ERROR_TITLE);
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
+        if (datePost.before(date)) {
+            return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.NEW, 0);
+        } else {
+            return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.NEW, 0);
+        }
     }
 
     private AddingPostResponse addPostModeratorOnly(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
-
-        if (addingPostRequest.getTitle().length() > 1) {
-            String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
-            if (cleanText.length() > 50) {
-                Calendar calendar = Calendar.getInstance();
-                Date date = calendar.getTime();
-                Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
-                if (datePost.before(date)) {
-                    return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.ACCEPTED, optionalUser.get().getId());
-                } else {
-                    return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.NEW, optionalUser.get().getId());
-                }
-            } else {
-                return postErrors(ERROR_TEXT);
-            }
+        HashMap<String, String> errors = checkAddErrors(addingPostRequest);
+        if (!errors.isEmpty()) {
+            return postErrors(errors);
         }
-        return postErrors(ERROR_TITLE);
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
+        if (datePost.before(date)) {
+            return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.ACCEPTED, optionalUser.get().getId());
+        } else {
+            return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.NEW, optionalUser.get().getId());
+        }
     }
 
     private AddingPostResponse addPostWithoutPremoderation(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
-        if (addingPostRequest.getTitle().length() > 1) {
-            String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
-            if (cleanText.length() > 50) {
-                Calendar calendar = Calendar.getInstance();
-                Date date = calendar.getTime();
-                Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
-                if (datePost.before(date)) {
-                    return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.ACCEPTED, 0);
-                } else {
-                    return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.ACCEPTED, 0);
-                }
-            } else {
-                return postErrors(ERROR_TEXT);
-            }
+        HashMap<String, String> errors = checkAddErrors(addingPostRequest);
+
+        if (!errors.isEmpty()) {
+            return postErrors(errors);
         }
-        return postErrors(ERROR_TITLE);
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
+        if (datePost.before(date)) {
+            return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.ACCEPTED, 0);
+        } else {
+            return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.ACCEPTED, 0);
+        }
+    }
+
+    private HashMap<String, String> checkAddErrors(AddingPostRequest addingPostRequest) {
+        HashMap<String, String> errors = new HashMap<>();
+        String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
+        if (addingPostRequest.getTitle().length() < 1) {
+            errors.put("title", ERROR_TITLE);
+        }
+        if (cleanText.length() < 50) {
+            errors.put("text", ERROR_TEXT);
+        }
+        return errors;
     }
 
     private AddingPostResponse postRecording(
@@ -155,7 +155,7 @@ public class AddingPostService {
             String tagLowerCase = tagFromArray.toLowerCase();
 
             int countCheckTag = tagRepository.countCheck(tagLowerCase);
-            if(countCheckTag > 0){
+            if (countCheckTag > 0) {
                 int idTag = tagRepository.idTag(tagLowerCase);
                 tagToPostBase.setTagId(idTag);
                 tagToPostBase.setPostId(post.getId());
@@ -172,10 +172,11 @@ public class AddingPostService {
         return addingPostResponse;
     }
 
-    private AddingPostResponse postErrors(String error) {
+    private AddingPostResponse postErrors(HashMap<String, String> errors) {
         AddingPostResponse addingPostResponse = new AddingPostResponse();
         ErrorsAddingPostResponse errorsAddingPostResponse = new ErrorsAddingPostResponse();
-        errorsAddingPostResponse.setTitle(error);
+        errorsAddingPostResponse.setTitle(errors.get("title"));
+        errorsAddingPostResponse.setText(errors.get("text"));
         addingPostResponse.setResult(false);
         addingPostResponse.setErrors(errorsAddingPostResponse);
         return addingPostResponse;

@@ -1,14 +1,9 @@
 package main.api.response.singlepost;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class UserPhotoResponse {
 
-    @JsonProperty("id")
     private int id;
-    @JsonProperty("name")
     private String name;
-    @JsonProperty("photo")
     private String photo;
 
     public int getId() {

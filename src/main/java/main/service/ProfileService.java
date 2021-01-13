@@ -1,8 +1,8 @@
 package main.service;
 
-import main.api.response.profile.ErrorsProfileResponse;
 import main.api.request.profile.ProfileRequest;
 import main.api.request.profile.ProfileRequestWithPhoto;
+import main.api.response.profile.ErrorsProfileResponse;
 import main.api.response.profile.ProfileResponse;
 import main.model.User;
 import main.model.UserRepository;
@@ -121,13 +121,17 @@ public class ProfileService {
     private HashMap<String, String> checkProfileErrors(ProfileRequest profile, Optional<User> optionalUser) {
         HashMap<String, String> errors = new HashMap<>();
         if (profile.getEmail() != null) {
-            if (!checkEmail(profile.getEmail(), optionalUser)) {
-                errors.put("email", ERROR_EMAIL);
+            if (!profile.getEmail().equals(optionalUser.get().getEmail())) {
+                if (checkEmail(profile.getEmail())) {
+                    errors.put("email", ERROR_EMAIL);
+                }
             }
         }
         if (profile.getName() != null) {
-            if (!profile.getName().matches(CHECK_NAME)) {
-                errors.put("name", ERROR_NAME);
+            if (!profile.getName().equals(optionalUser.get().getName())) {
+                if (!profile.getName().matches(CHECK_NAME)) {
+                    errors.put("name", ERROR_NAME);
+                }
             }
         }
         if (profile.getPassword() != null) {
@@ -141,14 +145,19 @@ public class ProfileService {
 
     private HashMap<String, String> checkProfileWithPhotoErrors(ProfileRequestWithPhoto profile, Optional<User> optionalUser) {
         HashMap<String, String> errors = new HashMap<>();
+
         if (profile.getEmail() != null) {
-            if (!checkEmail(profile.getEmail(), optionalUser)) {
-                errors.put("email", ERROR_EMAIL);
+            if (!profile.getEmail().equals(optionalUser.get().getEmail())) {
+                if (checkEmail(profile.getEmail())) {
+                    errors.put("email", ERROR_EMAIL);
+                }
             }
         }
         if (profile.getName() != null) {
-            if (!profile.getName().matches(CHECK_NAME)) {
-                errors.put("name", ERROR_NAME);
+            if (!profile.getName().equals(optionalUser.get().getName())) {
+                if (!profile.getName().matches(CHECK_NAME)) {
+                    errors.put("name", ERROR_NAME);
+                }
             }
         }
         if (profile.getPassword() != null) {
@@ -160,16 +169,15 @@ public class ProfileService {
         if (profile.getPhoto().getSize() > SIZE) {
             errors.put("photo", ERROR_PHOTO);
         }
-
-
         return errors;
     }
 
-    private boolean checkEmail(String email, Optional<User> optionalUser) {
-        if (email.equals(optionalUser.get().getEmail())) {
-            return false;
-        } else {
+    private boolean checkEmail(String email) {
+        int countEmail = userRepository.countEmail(email);
+        if (countEmail > 0) {
             return true;
+        } else {
+            return false;
         }
     }
 

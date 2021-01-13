@@ -1,10 +1,7 @@
 package main.api.response.restore;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class RestoreResponse {
 
-    @JsonProperty("result")
     private boolean result;
 
     public boolean isResult() {

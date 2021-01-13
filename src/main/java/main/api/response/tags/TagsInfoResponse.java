@@ -1,12 +1,8 @@
 package main.api.response.tags;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class TagsInfoResponse {
 
-    @JsonProperty("name")
     private String name;
-    @JsonProperty("weight")
     private double weight;
 
     public String getName() {

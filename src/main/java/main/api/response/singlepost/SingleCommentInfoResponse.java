@@ -1,16 +1,10 @@
 package main.api.response.singlepost;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class SingleCommentInfoResponse {
 
-    @JsonProperty("id")
     private int id;
-    @JsonProperty("timestamp")
     private long timestamp;
-    @JsonProperty("text")
     private String text;
-    @JsonProperty("user")
     private UserPhotoResponse user;
 
     public int getId() {

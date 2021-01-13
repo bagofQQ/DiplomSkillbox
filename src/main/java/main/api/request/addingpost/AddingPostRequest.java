@@ -1,18 +1,11 @@
 package main.api.request.addingpost;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class AddingPostRequest {
 
-    @JsonProperty("timestamp")
     private long timestamp;
-    @JsonProperty("active")
     private int active;
-    @JsonProperty("title")
     private String title;
-    @JsonProperty("tags")
     private String[] tags;
-    @JsonProperty("text")
     private String text;
 
 

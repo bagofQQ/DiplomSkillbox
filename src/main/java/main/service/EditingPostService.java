@@ -9,7 +9,10 @@ import org.jsoup.safety.Whitelist;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Optional;
 
 @Service
 public class EditingPostService {
@@ -37,33 +40,30 @@ public class EditingPostService {
         Optional<User> optionalUser = userRepository.findById(idUser);
         Optional<Post> optionalPost = postRepository.findById(postId);
 
-        if (editPostRequest.getTitle().length() > 1) {
-            String cleanText = Jsoup.clean(editPostRequest.getText(), Whitelist.none());
-            if (cleanText.length() > 50) {
-                if (optionalUser.get().getIsModerator() == USER) {
-                    Calendar calendar = Calendar.getInstance();
-                    Date date = calendar.getTime();
-                    Date datePost = new Date(editPostRequest.getTimestamp() * 1000);
-                    if (datePost.before(date)) {
-                        return editPostRecording(editPostRequest, ModerationStatus.NEW, optionalPost, date);
-                    } else {
-                        return editPostRecording(editPostRequest, ModerationStatus.NEW, optionalPost, datePost);
-                    }
-                } else if (optionalUser.get().getIsModerator() == MODERATOR) {
-                    Calendar calendar = Calendar.getInstance();
-                    Date date = calendar.getTime();
-                    Date datePost = new Date(editPostRequest.getTimestamp() * 1000);
-                    if (datePost.before(date)) {
-                        return editPostRecording(editPostRequest, optionalPost.get().getModerationStatus(), optionalPost, date);
-                    } else {
-                        return editPostRecording(editPostRequest, optionalPost.get().getModerationStatus(), optionalPost, datePost);
-                    }
+        HashMap<String, String> errors = checkAddErrors(editPostRequest);
+
+        if (errors.isEmpty()) {
+            if (optionalUser.get().getIsModerator() == USER) {
+                Calendar calendar = Calendar.getInstance();
+                Date date = calendar.getTime();
+                Date datePost = new Date(editPostRequest.getTimestamp() * 1000);
+                if (datePost.before(date)) {
+                    return editPostRecording(editPostRequest, ModerationStatus.NEW, optionalPost, date);
+                } else {
+                    return editPostRecording(editPostRequest, ModerationStatus.NEW, optionalPost, datePost);
                 }
-            } else {
-                return postErrors(ERROR_TEXT);
+            } else if (optionalUser.get().getIsModerator() == MODERATOR) {
+                Calendar calendar = Calendar.getInstance();
+                Date date = calendar.getTime();
+                Date datePost = new Date(editPostRequest.getTimestamp() * 1000);
+                if (datePost.before(date)) {
+                    return editPostRecording(editPostRequest, optionalPost.get().getModerationStatus(), optionalPost, date);
+                } else {
+                    return editPostRecording(editPostRequest, optionalPost.get().getModerationStatus(), optionalPost, datePost);
+                }
             }
         }
-        return postErrors(ERROR_TITLE);
+        return postErrors(errors);
     }
 
     private AddingPostResponse editPostRecording(AddingPostRequest editPostRequest, ModerationStatus status, Optional<Post> optionalPost, Date date) {
@@ -84,7 +84,7 @@ public class EditingPostService {
             String tagLowerCase = tagFromArray.toLowerCase();
 
             int countCheckTag = tagRepository.countCheck(tagLowerCase);
-            if (countCheckTag == 0){
+            if (countCheckTag == 0) {
                 tagBase.setName(tagLowerCase);
                 tagRepository.save(tagBase);
                 tagToPostBase.setTagId(tagBase.getId());
@@ -97,10 +97,23 @@ public class EditingPostService {
 
     }
 
-    private AddingPostResponse postErrors(String error) {
+    private HashMap<String, String> checkAddErrors(AddingPostRequest addingPostRequest) {
+        HashMap<String, String> errors = new HashMap<>();
+        String cleanText = Jsoup.clean(addingPostRequest.getText(), Whitelist.none());
+        if (addingPostRequest.getTitle().length() < 1) {
+            errors.put("title", ERROR_TITLE);
+        }
+        if (cleanText.length() < 50) {
+            errors.put("text", ERROR_TEXT);
+        }
+        return errors;
+    }
+
+    private AddingPostResponse postErrors(HashMap<String, String> errors) {
         AddingPostResponse addingPostResponse = new AddingPostResponse();
         ErrorsAddingPostResponse errorsAddingPostResponse = new ErrorsAddingPostResponse();
-        errorsAddingPostResponse.setTitle(error);
+        errorsAddingPostResponse.setTitle(errors.get("title"));
+        errorsAddingPostResponse.setText(errors.get("text"));
         addingPostResponse.setResult(false);
         addingPostResponse.setErrors(errorsAddingPostResponse);
         return addingPostResponse;

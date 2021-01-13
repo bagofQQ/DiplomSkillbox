@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -60,11 +61,9 @@ public class CommentService {
         postComment.setText(commentRequest.getText());
         postCommentRepository.save(postComment);
 
-        Iterable<PostComment> postCommentsIterable = postCommentRepository.findAll();
-        for (PostComment f : postCommentsIterable) {
-            if (f.getUser().getId() == idUser & f.getTime().equals(date)) {
-                commentResponse.setId(f.getId());
-            }
+        List<PostComment> postCommentList = postCommentRepository.findCommentUser(idUser, date);
+        for (PostComment f : postCommentList) {
+            commentResponse.setId(f.getId());
         }
         commentResponse.setResult(true);
         return commentResponse;

@@ -1,22 +1,13 @@
 package main.api.response.login;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class UserLoginInfoResponse {
 
-    @JsonProperty("id")
     private int id;
-    @JsonProperty("name")
     private String name;
-    @JsonProperty("photo")
     private String photo;
-    @JsonProperty("email")
     private String email;
-    @JsonProperty("moderation")
     private boolean moderation;
-    @JsonProperty("moderationCount")
     private int moderationCount;
-    @JsonProperty("settings")
     private boolean settings;
 
     public int getId() {

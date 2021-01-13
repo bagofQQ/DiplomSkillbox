@@ -1,13 +1,8 @@
 package main.api.response.profile;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ProfileResponse {
 
-    @JsonProperty("result")
     private boolean result;
-
-    @JsonProperty("errors")
     private ErrorsProfileResponse errors;
 
     public boolean isResult() {

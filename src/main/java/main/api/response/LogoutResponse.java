@@ -1,10 +1,7 @@
 package main.api.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class LogoutResponse {
 
-    @JsonProperty("result")
     private boolean result;
 
     public boolean isResult() {
