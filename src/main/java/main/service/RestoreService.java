@@ -17,8 +17,8 @@ import java.util.Properties;
 @Service
 public class RestoreService {
 
-    private String username = "bagcucumber347@gmail.com";
-    private String password = "juehtw347cevrf";
+    private String username = "username";
+    private String password = "password";
 
     @Autowired
     private UserRepository userRepository;
