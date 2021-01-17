@@ -128,7 +128,13 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query(value = QUERY_CALENDAR,
             nativeQuery = true)
-    List<Post> findCalendarYear(@Param("year") int year);
+    List<Post> findPostsYear(@Param("year") int year);
+
+    String QUERY_CALENDAR_YEARS = "select date_format(post.time, '%Y') as year from post group by year order by year asc";
+
+    @Query(value = QUERY_CALENDAR_YEARS,
+            nativeQuery = true)
+    List<Integer> findCalendarYears();
 
     String QUERY_COUNT_DATE = "select count(*) from post where post.is_active = 1 and post.moderation_status = 'ACCEPTED' and date_format(post.time, '%Y-%m-%d') = (:date_requested)";
 

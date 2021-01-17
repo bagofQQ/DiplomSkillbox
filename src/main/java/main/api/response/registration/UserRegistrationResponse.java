@@ -2,6 +2,7 @@ package main.api.response.registration;
 
 public class UserRegistrationResponse {
 
+
     private boolean result;
     private ErrorsRegistrationResponse errors;
 

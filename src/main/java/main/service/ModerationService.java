@@ -1,64 +1,51 @@
 package main.service;
 
+import main.PostsException;
 import main.api.response.moderation.ModerationResponse;
 import main.model.ModerationStatus;
 import main.model.Post;
 import main.model.PostRepository;
-import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Optional;
 
 @Service
 public class ModerationService {
 
-    private static final String ACCEPT = "accept";
-    private static final String DECLINE = "decline";
+    @Value("${blog.constants.accept}")
+    private String ACCEPT;
+    @Value("${blog.constants.decline}")
+    private String DECLINE;
+
+    private final PostRepository postRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    public ModerationService(PostRepository postRepository) {
+        this.postRepository = postRepository;
+    }
 
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private HttpSession httpSession;
-
-    public ModerationResponse getMod(int postId, String decision, int idUser) {
-        ModerationResponse moderationResponse = new ModerationResponse();
-        Optional<Post> optionalPosts = postRepository.findById(postId);
-
+    public ModerationResponse getMod(int postId, String decision, int idModer) {
+        Post post = postRepository.findById(postId).orElseThrow(PostsException::new);
         if (decision.equals(ACCEPT)) {
-            optionalPosts.get().setModerationStatus(ModerationStatus.ACCEPTED);
-
-            optionalPosts.get().setModeratorId(idUser);
-
-            Calendar calendar = Calendar.getInstance();
-            Date dateMod = calendar.getTime();
-            optionalPosts.get().setTime(dateMod);
-
-            postRepository.save(optionalPosts.get());
-            moderationResponse.setResult(true);
-            return moderationResponse;
-        } else if (decision.equals(DECLINE)) {
-            optionalPosts.get().setModerationStatus(ModerationStatus.DECLINED);
-
-            optionalPosts.get().setModeratorId(idUser);
-
-            Calendar calendar = Calendar.getInstance();
-            Date dateMod = calendar.getTime();
-            optionalPosts.get().setTime(dateMod);
-
-            postRepository.save(optionalPosts.get());
-            moderationResponse.setResult(true);
-            return moderationResponse;
+            return getModerationResponse(post, idModer, ModerationStatus.ACCEPTED);
         }
+        if (decision.equals(DECLINE)) {
+            return getModerationResponse(post, idModer, ModerationStatus.DECLINED);
+        }
+        return new ModerationResponse(false);
+    }
 
-        moderationResponse.setResult(false);
-        return moderationResponse;
+    private ModerationResponse getModerationResponse(Post post, int idModer, ModerationStatus status) {
+        setPost(post, idModer, status);
+        return new ModerationResponse(true);
+    }
+
+    private void setPost(Post post, int idModer, ModerationStatus status) {
+        post.setModerationStatus(status);
+        post.setModeratorId(idModer);
+        post.setTime(Calendar.getInstance().getTime());
+        postRepository.save(post);
     }
 }

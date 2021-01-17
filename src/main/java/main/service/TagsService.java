@@ -13,27 +13,27 @@ import java.util.HashSet;
 @Service
 public class TagsService {
 
-    @Autowired
-    private PostRepository postRepository;
+    private final PostRepository postRepository;
+    private final TagRepository tagRepository;
 
     @Autowired
-    private TagRepository tagRepository;
+    public TagsService(PostRepository postRepository, TagRepository tagRepository) {
+        this.postRepository = postRepository;
+        this.tagRepository = tagRepository;
+    }
 
     public TagsResponse getAllTags() {
         TagsResponse tagsResponse = new TagsResponse();
-
         HashSet<TagsInfoResponse> tagsInfoResponseSet = new HashSet<>();
-
         int activePostsSize = postRepository.countActivePosts();
-
         Iterable<Tag> tagsIterable = tagRepository.findAll();
         for (Tag tag : tagsIterable) {
             TagsInfoResponse tagsInfoResponse = new TagsInfoResponse();
             int countTagPosts = postRepository.countTagPosts(tag.getId());
             double weight = (double) countTagPosts / activePostsSize * 2;
-            if(countTagPosts > 0){
+            if (countTagPosts > 0) {
                 tagsInfoResponse.setName(tag.getName());
-                tagsInfoResponse.setWeight(weight);
+                tagsInfoResponse.setWeight(weight * 2);
                 tagsInfoResponseSet.add(tagsInfoResponse);
             }
         }

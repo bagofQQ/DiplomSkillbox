@@ -1,104 +1,85 @@
 package main.service;
 
+import main.PostsException;
 import main.api.request.password.PasswordRequest;
 import main.api.response.password.ErrorsPasswordResponse;
 import main.api.response.password.PasswordResponse;
-import main.model.CaptchaCodes;
 import main.model.CaptchaCodesRepository;
 import main.model.User;
 import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PasswordService {
 
-    private static final String ERROR_CODE = "Ссылка для восстановления пароля устарела.<a href=\"/auth/restore\">" +
-            "Запросить ссылку снова</a>";
-    private static final String ERROR_PASSWORD = "Пароль короче 6-ти символов";
-    private static final String ERROR_CAPTCHA = "Код с картинки введён неверно";
+    @Value("${blog.constants.errorCode}")
+    private String ERROR_CODE;
+    @Value("${blog.constants.errorPassword}")
+    private String ERROR_PASSWORD;
+    @Value("${blog.constants.errorCaptcha}")
+    private String ERROR_CAPTCHA;
+
     private int idUserChangePassword;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final CaptchaCodesRepository captchaCodesRepository;
 
     @Autowired
-    private CaptchaCodesRepository captchaCodesRepository;
+    public PasswordService(UserRepository userRepository, CaptchaCodesRepository captchaCodesRepository) {
+        this.userRepository = userRepository;
+        this.captchaCodesRepository = captchaCodesRepository;
+    }
 
-    public PasswordResponse getPassword(PasswordRequest password) {
+    public PasswordResponse updatePassword(PasswordRequest password) {
 
+        HashMap<String, String> errors = checkPasswordErrors(password);
+        if (!errors.isEmpty()) {
+            return setErrors(errors);
+        }
         PasswordResponse passwordResponse = new PasswordResponse();
-        ErrorsPasswordResponse errorsPasswordResponse = new ErrorsPasswordResponse();
+        int idUser = getIdUserChangePassword();
+        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+        user.setCode(password.getCaptchaSecret());
+        user.setPassword(password.getPassword());
+        userRepository.save(user);
 
-        if (checkCode(password.getCode())) {
-            if (checkCaptcha(password.getCaptchaSecret(), password.getCaptcha())) {
-                if (password.getPassword().length() >= 6) {
-                    int idUCP = getIdUserChangePassword();
-                    Optional<User> optionalUsers = userRepository.findById(idUCP);
+        passwordResponse.setResult(true);
+        return passwordResponse;
+    }
 
-                    optionalUsers.get().setCode(password.getCaptchaSecret());
-                    optionalUsers.get().setPassword(password.getPassword());
-                    userRepository.save(optionalUsers.get());
-
-                    passwordResponse.setResult(true);
-                    return passwordResponse;
-                } else {
-                    errorsPasswordResponse.setCode(ERROR_PASSWORD);
-                    passwordResponse.setErrors(errorsPasswordResponse);
-                    passwordResponse.setResult(false);
-                    return passwordResponse;
-                }
-            } else {
-                errorsPasswordResponse.setCode(ERROR_CAPTCHA);
-                passwordResponse.setErrors(errorsPasswordResponse);
-                passwordResponse.setResult(false);
-                return passwordResponse;
+    private HashMap<String, String> checkPasswordErrors(PasswordRequest password) {
+        HashMap<String, String> errors = new HashMap<>();
+        List<User> findUserCode = userRepository.findUserCode(password.getCode());
+        if (findUserCode.size() == 1) {
+            for (User f : findUserCode) {
+                setIdUserChangePassword(f.getId());
             }
         } else {
-            errorsPasswordResponse.setCode(ERROR_CODE);
-            passwordResponse.setErrors(errorsPasswordResponse);
-            passwordResponse.setResult(false);
-            return passwordResponse;
+            errors.put("code", ERROR_CODE);
         }
+        if (captchaCodesRepository.countCaptcha(password.getCaptchaSecret(), password.getCaptcha()) < 1) {
+            errors.put("captcha", ERROR_CAPTCHA);
+        }
+        if (password.getPassword().length() < 6) {
+            errors.put("password", ERROR_PASSWORD);
+        }
+        return errors;
     }
 
-    private boolean checkCaptcha(String captchaSecret, String captcha) {
-        Iterable<CaptchaCodes> captchaCodesIterable = captchaCodesRepository.findAll();
-        for (CaptchaCodes f : captchaCodesIterable) {
-            Optional<CaptchaCodes> optionalCaptchaCodes = captchaCodesRepository.findById(f.getId());
-            if (captchaSecret.equals(optionalCaptchaCodes.get().getSecretCode())) {
-                if (captcha.equals(optionalCaptchaCodes.get().getCode())) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean checkCode(String code) {
-        List<User> findUserCode = userRepository.findUserCode(code);
-        if(findUserCode.size() == 1){
-            for(User f : findUserCode){
-                setIdUserChangePassword(f.getId());
-                return true;
-            }
-        }
-        return false;
-
-//        Iterable<User> usersIterable = userRepository.findAll();
-//        for (User q : usersIterable) {
-//            Optional<User> optionalUsers = userRepository.findById(q.getId());
-//            if (code.equals(optionalUsers.get().getCode())) {
-//                setIdUserChangePassword(optionalUsers.get().getId());
-//                return true;
-//            }
-//        }
-//        return false;
+    private PasswordResponse setErrors(HashMap<String, String> errors) {
+        PasswordResponse passwordResponse = new PasswordResponse();
+        ErrorsPasswordResponse errorsPasswordResponse = new ErrorsPasswordResponse();
+        errorsPasswordResponse.setCode(errors.get("code"));
+        errorsPasswordResponse.setCaptcha(errors.get("captcha"));
+        errorsPasswordResponse.setPassword(errors.get("password"));
+        passwordResponse.setErrors(errorsPasswordResponse);
+        passwordResponse.setResult(false);
+        return passwordResponse;
     }
 
     private int getIdUserChangePassword() {
@@ -108,7 +89,6 @@ public class PasswordService {
     private void setIdUserChangePassword(int idUserChangePassword) {
         this.idUserChangePassword = idUserChangePassword;
     }
-
 
 
 }

@@ -14,6 +14,7 @@ import main.model.GlobalSettings;
 import main.model.GlobalSettingsRepository;
 import main.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,20 +28,20 @@ import java.io.IOException;
 @RestController
 public class ApiAuthController {
 
-    private final СaptchaService сaptchaService;
-    private final UserRegistrationService userRegistrationService;
-    private final UserLoginService userLoginService;
-    private final RestoreService restoreService;
-    private final PasswordService passwordService;
-
-    private static final String MM_CODE = "MM";
-    private static final String VALUE_YES = "YES";
+    @Value("${blog.constants.valueYes}")
+    private String VALUE_YES;
 
     @Autowired
     private GlobalSettingsRepository globalSettingsRepository;
 
     @Autowired
     private HttpSession httpSession;
+
+    private final СaptchaService сaptchaService;
+    private final UserRegistrationService userRegistrationService;
+    private final UserLoginService userLoginService;
+    private final RestoreService restoreService;
+    private final PasswordService passwordService;
 
     public ApiAuthController(СaptchaService сaptchaService,
                              UserRegistrationService userRegistrationService,
@@ -56,27 +57,20 @@ public class ApiAuthController {
 
     @GetMapping("/api/auth/check")
     public UserLoginResponse check(){
-        return userLoginService.getUserCheck();
+        return userLoginService.checkUser();
     }
 
     @PostMapping("/api/auth/register")
     public ResponseEntity<UserRegistrationResponse> getUserRegistrationResponse(@RequestBody UserRegistrationRequest user){
-        Iterable<GlobalSettings> globalSettingsIterable = globalSettingsRepository.findAll();
-        for(GlobalSettings f : globalSettingsIterable){
-            if(f.getCode().equals(MM_CODE)){
-                if(f.getValue().equals(VALUE_YES)){
-                    return new ResponseEntity(userRegistrationService.getUserRegistrationInfo(user), HttpStatus.OK);
-                } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                }
-            }
+        if(globalSettingsRepository.findValueMultiuserMode().equals(VALUE_YES)){
+            return new ResponseEntity(userRegistrationService.getUserRegistrationInfo(user), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
     @GetMapping("/api/auth/captcha")
     public СaptchaResponse getCaptchaResponse() throws IOException {
-        return сaptchaService.getCaptcha();
+        return сaptchaService.generateCaptcha();
     }
 
     @PostMapping("/api/auth/login")
@@ -97,12 +91,12 @@ public class ApiAuthController {
 
     @PostMapping("/api/auth/restore")
     public RestoreResponse restore(@RequestBody EmailResponse email){
-        return restoreService.get(email.getEmail());
+        return restoreService.restoreEmail(email.getEmail());
     }
 
     @PostMapping("/api/auth/password")
     public PasswordResponse password(@RequestBody PasswordRequest password){
-        return passwordService.getPassword(password);
+        return passwordService.updatePassword(password);
     }
 
 

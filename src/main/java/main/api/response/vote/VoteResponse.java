@@ -1,8 +1,12 @@
-package main.api.response.like;
+package main.api.response.vote;
 
-public class LikeResponse {
+public class VoteResponse {
 
     private boolean result;
+
+    public VoteResponse(boolean result) {
+        this.result = result;
+    }
 
     public boolean isResult() {
         return result;
@@ -11,4 +15,5 @@ public class LikeResponse {
     public void setResult(boolean result) {
         this.result = result;
     }
+
 }

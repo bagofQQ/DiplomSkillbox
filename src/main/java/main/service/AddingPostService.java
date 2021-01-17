@@ -1,5 +1,6 @@
 package main.service;
 
+import main.PostsException;
 import main.api.request.addingpost.AddingPostRequest;
 import main.api.response.addingpost.AddingPostResponse;
 import main.api.response.addingpost.ErrorsAddingPostResponse;
@@ -7,6 +8,7 @@ import main.model.*;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -14,106 +16,50 @@ import org.springframework.stereotype.Service;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Optional;
 
 @Service
 public class AddingPostService {
 
-    private static final String ERROR_TITLE = "Заголовок не установлен или слишком короткий";
-    private static final String ERROR_TEXT = "Текст публикации слишком короткий";
+    @Value("${blog.constants.valueYes}")
+    private String VALUE_YES;
+    @Value("${blog.constants.errorTitle}")
+    private String ERROR_TITLE;
+    @Value("${blog.constants.errorText}")
+    private String ERROR_TEXT;
 
-    private static final String MM_CODE = "MM";
-    private static final String PP_CODE = "PP";
-    private static final String VALUE_YES = "YES";
-
-    @Autowired
-    private GlobalSettingsRepository globalSettingsRepository;
-
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private TagRepository tagRepository;
+    private final GlobalSettingsRepository globalSettingsRepository;
+    private final PostRepository postRepository;
+    private final TagRepository tagRepository;
+    private final TagToPostRepository tagToPostRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    private TagToPostRepository tagToPostRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    public ResponseEntity<AddingPostResponse> add(AddingPostRequest addingPostRequest, int idUser) {
-
-        Optional<User> optionalUser = userRepository.findById(idUser);
-
-        Iterable<GlobalSettings> globalSettingsIterable = globalSettingsRepository.findAll();
-        if (checkSettings(PP_CODE, globalSettingsIterable)) {
-            if (checkSettings(MM_CODE, globalSettingsIterable)) {
-                return new ResponseEntity(addPost(addingPostRequest, optionalUser), HttpStatus.OK);
-            } else {
-                if (optionalUser.get().getIsModerator() == 1) {
-                    return new ResponseEntity(addPostModeratorOnly(addingPostRequest, optionalUser), HttpStatus.OK);
-                } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                }
-            }
-        } else {
-            if (checkSettings(MM_CODE, globalSettingsIterable)) {
-                return new ResponseEntity(addPostWithoutPremoderation(addingPostRequest, optionalUser), HttpStatus.OK);
-            } else {
-                if (optionalUser.get().getIsModerator() == 1) {
-                    return new ResponseEntity(addPostModeratorOnly(addingPostRequest, optionalUser), HttpStatus.OK);
-                } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                }
-            }
-        }
+    public AddingPostService(GlobalSettingsRepository globalSettingsRepository,
+                             PostRepository postRepository,
+                             TagRepository tagRepository,
+                             TagToPostRepository tagToPostRepository,
+                             UserRepository userRepository) {
+        this.globalSettingsRepository = globalSettingsRepository;
+        this.postRepository = postRepository;
+        this.tagRepository = tagRepository;
+        this.tagToPostRepository = tagToPostRepository;
+        this.userRepository = userRepository;
     }
 
-    private AddingPostResponse addPost(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
-
-        HashMap<String, String> errors = checkAddErrors(addingPostRequest);
-        if (!errors.isEmpty()) {
-            return postErrors(errors);
+    public ResponseEntity<AddingPostResponse> addPost(AddingPostRequest addingPostRequest, int idUser) {
+        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+        if (!globalSettingsRepository.findValuePostPremoderation().equals(VALUE_YES) & addingPostRequest.getActive() == 1) {
+            return new ResponseEntity(recordingOrSetErrors(addingPostRequest, user, ModerationStatus.ACCEPTED), HttpStatus.OK);
         }
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
-        if (datePost.before(date)) {
-            return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.NEW, 0);
-        } else {
-            return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.NEW, 0);
-        }
+        return new ResponseEntity(recordingOrSetErrors(addingPostRequest, user, ModerationStatus.NEW), HttpStatus.OK);
     }
 
-    private AddingPostResponse addPostModeratorOnly(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
+    private AddingPostResponse recordingOrSetErrors(AddingPostRequest addingPostRequest, User user, ModerationStatus status) {
         HashMap<String, String> errors = checkAddErrors(addingPostRequest);
         if (!errors.isEmpty()) {
-            return postErrors(errors);
+            return setErrors(errors);
         }
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
-        if (datePost.before(date)) {
-            return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.ACCEPTED, optionalUser.get().getId());
-        } else {
-            return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.NEW, optionalUser.get().getId());
-        }
-    }
-
-    private AddingPostResponse addPostWithoutPremoderation(AddingPostRequest addingPostRequest, Optional<User> optionalUser) {
-        HashMap<String, String> errors = checkAddErrors(addingPostRequest);
-
-        if (!errors.isEmpty()) {
-            return postErrors(errors);
-        }
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        Date datePost = new Date(addingPostRequest.getTimestamp() * 1000);
-        if (datePost.before(date)) {
-            return postRecording(addingPostRequest, optionalUser, date, ModerationStatus.ACCEPTED, 0);
-        } else {
-            return postRecording(addingPostRequest, optionalUser, datePost, ModerationStatus.ACCEPTED, 0);
-        }
+        return postRecording(addingPostRequest, user, status);
     }
 
     private HashMap<String, String> checkAddErrors(AddingPostRequest addingPostRequest) {
@@ -128,51 +74,7 @@ public class AddingPostService {
         return errors;
     }
 
-    private AddingPostResponse postRecording(
-            AddingPostRequest addingPostRequest,
-            Optional<User> optionalUser,
-            Date date, ModerationStatus status, int moderatorId) {
-        AddingPostResponse addingPostResponse = new AddingPostResponse();
-        Post post = new Post();
-
-        post.setIsActive(addingPostRequest.getActive());
-        post.setModerationStatus(status);
-        post.setModeratorId(moderatorId);
-
-        post.setUser(optionalUser.get());
-
-        post.setTime(date);
-        post.setTitle(addingPostRequest.getTitle());
-        post.setText(addingPostRequest.getText());
-        post.setViewCount(0);
-        postRepository.save(post);
-
-
-        for (String tagFromArray : addingPostRequest.getTags()) {
-            Tag tagBase = new Tag();
-            TagToPost tagToPostBase = new TagToPost();
-
-            String tagLowerCase = tagFromArray.toLowerCase();
-
-            int countCheckTag = tagRepository.countCheck(tagLowerCase);
-            if (countCheckTag > 0) {
-                int idTag = tagRepository.idTag(tagLowerCase);
-                tagToPostBase.setTagId(idTag);
-                tagToPostBase.setPostId(post.getId());
-                tagToPostRepository.save(tagToPostBase);
-            } else {
-                tagBase.setName(tagLowerCase);
-                tagRepository.save(tagBase);
-                tagToPostBase.setTagId(tagBase.getId());
-                tagToPostBase.setPostId(post.getId());
-                tagToPostRepository.save(tagToPostBase);
-            }
-        }
-        addingPostResponse.setResult(true);
-        return addingPostResponse;
-    }
-
-    private AddingPostResponse postErrors(HashMap<String, String> errors) {
+    private AddingPostResponse setErrors(HashMap<String, String> errors) {
         AddingPostResponse addingPostResponse = new AddingPostResponse();
         ErrorsAddingPostResponse errorsAddingPostResponse = new ErrorsAddingPostResponse();
         errorsAddingPostResponse.setTitle(errors.get("title"));
@@ -182,16 +84,55 @@ public class AddingPostService {
         return addingPostResponse;
     }
 
-    private boolean checkSettings(String code, Iterable<GlobalSettings> globalSettingsIterable) {
-        for (GlobalSettings setting : globalSettingsIterable) {
-            if (setting.getCode().equals(code)) {
-                if (setting.getValue().equals(VALUE_YES)) {
-                    return true;
-                } else {
-                    return false;
-                }
+    private AddingPostResponse postRecording(
+            AddingPostRequest addingPostRequest,
+            User user, ModerationStatus status) {
+        AddingPostResponse addingPostResponse = new AddingPostResponse();
+        Post post = new Post();
+        post.setModerationStatus(status);
+        post.setIsActive(addingPostRequest.getActive());
+        post.setModeratorId(0);
+        post.setUser(user);
+        post.setTime(checkDate(addingPostRequest.getTimestamp()));
+        post.setTitle(addingPostRequest.getTitle());
+        post.setText(addingPostRequest.getText());
+        post.setViewCount(0);
+        postRepository.save(post);
+        tagRecording(addingPostRequest, post);
+        addingPostResponse.setResult(true);
+        return addingPostResponse;
+    }
+
+    private Date checkDate(long timestamp) {
+        Date date = Calendar.getInstance().getTime();
+        Date datePost = new Date(timestamp * 1000);
+        if (datePost.before(date)) {
+            return date;
+        }
+        return datePost;
+    }
+
+    private void tagRecording(AddingPostRequest addingPostRequest, Post post) {
+        for (String tagFromArray : addingPostRequest.getTags()) {
+            Tag tagBase = new Tag();
+            String tagLowerCase = tagFromArray.toLowerCase();
+            if (tagRepository.countCheck(tagLowerCase) > 0) {
+                int idTag = tagRepository.idTag(tagLowerCase);
+                tagToPostRecording(idTag, post);
+            } else {
+                tagBase.setName(tagLowerCase);
+                tagRepository.save(tagBase);
+                tagToPostRecording(tagBase.getId(), post);
             }
         }
-        return false;
+    }
+
+    private void tagToPostRecording(int idTag, Post post) {
+        TagToPost tagToPostBase = new TagToPost();
+        if (tagToPostRepository.countCheckTagToPost(idTag, post.getId()) < 1) {
+            tagToPostBase.setTagId(idTag);
+            tagToPostBase.setPostId(post.getId());
+            tagToPostRepository.save(tagToPostBase);
+        }
     }
 }

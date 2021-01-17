@@ -12,9 +12,11 @@ import main.api.response.StatisticsResponse;
 import main.api.response.calendar.CalendarResponse;
 import main.api.response.comment.CommentResponse;
 import main.api.response.moderation.ModerationResponse;
+import main.api.response.profile.ProfileResponse;
 import main.api.response.tags.TagsResponse;
 import main.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,9 +29,12 @@ import java.util.Calendar;
 @RestController
 public class ApiGeneralController {
 
-    private static final int SIZE = 5242880;
-    private static final String FORMAT_JPG = "jpg";
-    private static final String FORMAT_PNG = "png";
+    @Value("${blog.constants.size}")
+    private int SIZE;
+    @Value("${blog.constants.formatJpg}")
+    private String FORMAT_JPG;
+    @Value("${blog.constants.formatPng}")
+    private String FORMAT_PNG;
 
     @Autowired
     private HttpSession httpSession;
@@ -93,7 +98,7 @@ public class ApiGeneralController {
     }
 
     @PostMapping(value = "/api/profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateProfileWithPhoto(@ModelAttribute ProfileRequestWithPhoto profile) throws IOException {
+    public ResponseEntity<ProfileResponse> updateProfileWithPhoto(@ModelAttribute ProfileRequestWithPhoto profile) throws IOException {
 
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
@@ -105,7 +110,7 @@ public class ApiGeneralController {
     }
 
     @PostMapping(value = "/api/profile/my", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateMyProfile(@RequestBody ProfileRequest profile) {
+    public ResponseEntity<ProfileResponse> updateMyProfile(@RequestBody ProfileRequest profile) {
 
         String identifier = httpSession.getId();
         if (userLoginService.getIdentifierMap().containsKey(identifier)) {
@@ -116,22 +121,23 @@ public class ApiGeneralController {
 
     }
 
-    @PostMapping("/api/image")
-    public ResponseEntity image(@ModelAttribute ImageRequest imageP) throws IOException {
 
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            String format = imageP.getImage().getOriginalFilename()
-                    .replaceAll("(.+)(\\.)(\\w{3})$", "$3");
-            if (format.equals(FORMAT_JPG) || format.equals(FORMAT_PNG)) {
-                if (imageP.getImage().getSize() > SIZE) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imageService.getImageError());
-                }
-                return new ResponseEntity(imageService.writeImage(imageP.getImage()), HttpStatus.OK);
-            }
+    @PostMapping("/api/image")
+    public ResponseEntity<?> image(@ModelAttribute ImageRequest imageP) throws IOException {
+        if (!userLoginService.getIdentifierMap().containsKey(httpSession.getId())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        String format = imageService.parseDimension(imageP.getImage().getOriginalFilename());
+        if (imageP.getImage().getSize() > SIZE) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imageService.getImageError());
+        }
+
+        if (!(format.equals(FORMAT_JPG) || format.equals(FORMAT_PNG))) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imageService.getFormatError());
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+
+        return new ResponseEntity(imageService.writeImage(imageP.getImage()), HttpStatus.OK);
     }
 
     @PostMapping("/api/moderation")
@@ -175,12 +181,11 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/api/calendar")
-    public ResponseEntity<CalendarResponse> calendar(@RequestParam int year) {
+    public ResponseEntity<CalendarResponse> calendar(@RequestParam(defaultValue = "0") int year) {
         if (year == 0) {
-            Calendar calendar = Calendar.getInstance();
-            return new ResponseEntity<>(calendarService.getCalendar(calendar.get(1)), HttpStatus.OK);
+            return new ResponseEntity<CalendarResponse>(calendarService.getCalendar(Calendar.getInstance().get(1)), HttpStatus.OK);
         }
-        return new ResponseEntity<>(calendarService.getCalendar(year), HttpStatus.OK);
+        return new ResponseEntity<CalendarResponse>(calendarService.getCalendar(year), HttpStatus.OK);
     }
 
 }

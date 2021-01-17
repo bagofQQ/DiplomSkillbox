@@ -7,6 +7,7 @@ import main.api.response.singlepost.SinglePostResponse;
 import main.api.response.singlepost.UserPhotoResponse;
 import main.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,109 +18,102 @@ import java.util.*;
 @Service
 public class SinglePostService {
 
-    private static final String MODERATION_ACCEPTED = "ACCEPTED";
-    private static final int ACTIVE_POST = 1;
-    private static final int MODERATOR = 1;
-    private static final int USER = 0;
+    @Value("${blog.constants.user}")
+    private int USER;
+
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final PostVotesRepository postVotesRepository;
+    private final PostCommentRepository postCommentRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private PostVotesRepository postVotesRepository;
-
-    @Autowired
-    private PostCommentRepository postCommentRepository;
+    public SinglePostService(UserRepository userRepository, PostRepository postRepository, PostVotesRepository postVotesRepository, PostCommentRepository postCommentRepository) {
+        this.userRepository = userRepository;
+        this.postRepository = postRepository;
+        this.postVotesRepository = postVotesRepository;
+        this.postCommentRepository = postCommentRepository;
+    }
 
     @Transactional
     public ResponseEntity<SinglePostResponse> getSinglePost(int id, String identifier, HashMap<String, Integer> identifierMap) {
         Post post = postRepository.findById(id).orElseThrow(PostsException::new);
-        return new ResponseEntity<>(singlPostRecording(identifierMap, identifier, post), HttpStatus.OK);
+        setView(identifierMap, identifier, post);
+        return new ResponseEntity<>(setSinglPost(post), HttpStatus.OK);
     }
 
-    private SinglePostResponse singlPostRecording(HashMap<String, Integer> identifierMap, String identifier, Post post) {
-        SinglePostResponse singlePostResponse = new SinglePostResponse();
-        UserResponse userResponse = new UserResponse();
-        Optional<User> optionalUserAuthor = userRepository.findById(post.getUser().getId());
-        userResponse.setName(optionalUserAuthor.get().getName());
-        userResponse.setId(optionalUserAuthor.get().getId());
-
-
+    private void setView(HashMap<String, Integer> identifierMap, String identifier, Post post) {
         if (identifierMap.containsKey(identifier)) {
-            int q = identifierMap.get(identifier);
-            Optional<User> optionalUser = userRepository.findById(q);
-            if (optionalUser.get().getIsModerator() == USER) {
-                if (post.getUser().getId() != optionalUser.get().getId()) {
-                    post.setViewCount(post.getViewCount() + 1);
-                    postRepository.save(post);
-                }
+            User user = userRepository.findById(identifierMap.get(identifier)).orElseThrow(PostsException::new);
+            if (user.getIsModerator() == USER & post.getUser().getId() != user.getId()) {
+                post.setViewCount(post.getViewCount() + 1);
+                postRepository.save(post);
             }
         } else if (!identifierMap.containsKey(identifier)) {
             post.setViewCount(post.getViewCount() + 1);
             postRepository.save(post);
         }
+    }
 
+    private SinglePostResponse setSinglPost(Post post) {
+        SinglePostResponse singlePostResponse = new SinglePostResponse();
+        UserResponse userResponse = new UserResponse();
+
+        userResponse.setName(post.getUser().getName());
+        userResponse.setId(post.getUser().getId());
         singlePostResponse.setId(post.getId());
-
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        Date dateSinglePost = post.getTime();
-
-        if (dateSinglePost.before(date)) {
-            long timestamp = dateSinglePost.getTime() / 1000;
-            singlePostResponse.setTimestamp(timestamp);
-        } else {
-            long timestamp = date.getTime() / 1000;
-            singlePostResponse.setTimestamp(timestamp);
-        }
+        singlePostResponse.setTimestamp(getDate(Calendar.getInstance().getTime(), post.getTime()));
         singlePostResponse.setActive(true);
         singlePostResponse.setUser(userResponse);
-
         singlePostResponse.setTitle(post.getTitle());
         singlePostResponse.setText(post.getText());
-
-        List<PostVotes> likeList = postVotesRepository.findLike(post.getId());
-        List<PostVotes> dislikeList = postVotesRepository.findDislike(post.getId());
-
-        singlePostResponse.setLikeCount(likeList.size());
-        singlePostResponse.setDislikeCount(dislikeList.size());
-
+        singlePostResponse.setLikeCount(postVotesRepository.findLike(post.getId()).size());
+        singlePostResponse.setDislikeCount(postVotesRepository.findDislike(post.getId()).size());
         singlePostResponse.setViewCount(post.getViewCount());
+        singlePostResponse.setComments(getCommentList(post));
+        singlePostResponse.setTags(getTagList(post));
 
-        List<SingleCommentInfoResponse> sCommentList = new ArrayList<>();
+        return singlePostResponse;
+    }
 
-        List<PostComment> commentList = postCommentRepository.findComment(post.getId());
-        for (PostComment f : commentList) {
-            if (post.getId() == f.getPostId()) {
-                Optional<User> optionalUsersComment = userRepository.findById(f.getUser().getId());
-                UserPhotoResponse us = new UserPhotoResponse();
-                us.setId(optionalUsersComment.get().getId());
-                us.setName(optionalUsersComment.get().getName());
-                us.setPhoto(optionalUsersComment.get().getPhoto());
-
-                SingleCommentInfoResponse sComment = new SingleCommentInfoResponse();
-                sComment.setId(f.getId());
-                sComment.setText(f.getText());
-
-                Date dateComment = f.getTime();
-                long timestampComment = dateComment.getTime() / 1000;
-                sComment.setTimestamp(timestampComment);
-                sComment.setUser(us);
-                sCommentList.add(sComment);
-            }
-        }
-        singlePostResponse.setComments(sCommentList);
-
+    private List<String> getTagList(Post post) {
         List<String> tagsList = new ArrayList();
 
         post.getTags().forEach(tags1 -> {
             tagsList.add(tags1.getName());
         });
-        singlePostResponse.setTags(tagsList);
+        return tagsList;
+    }
 
-        return singlePostResponse;
+    private List<SingleCommentInfoResponse> getCommentList(Post post) {
+        List<SingleCommentInfoResponse> singlePostCommentList = new ArrayList<>();
+        List<PostComment> postCommentList = postCommentRepository.findComment(post.getId());
+        for (PostComment postComment : postCommentList) {
+            if (post.getId() == postComment.getPostId()) {
+                User user = userRepository.findById(postComment.getUser().getId()).orElseThrow(PostsException::new);
+                UserPhotoResponse ups = new UserPhotoResponse();
+                ups.setId(user.getId());
+                ups.setName(user.getName());
+                ups.setPhoto(user.getPhoto());
+
+                SingleCommentInfoResponse singlePostComment = new SingleCommentInfoResponse();
+                singlePostComment.setId(postComment.getId());
+                singlePostComment.setText(postComment.getText());
+
+                Date dateComment = postComment.getTime();
+                long timestampComment = dateComment.getTime() / 1000;
+                singlePostComment.setTimestamp(timestampComment);
+                singlePostComment.setUser(ups);
+                singlePostCommentList.add(singlePostComment);
+            }
+        }
+        return singlePostCommentList;
+    }
+
+    private long getDate(Date date, Date dateSinglePost) {
+        if (dateSinglePost.before(date)) {
+            return dateSinglePost.getTime() / 1000;
+        } else {
+            return date.getTime() / 1000;
+        }
     }
 }

@@ -2,18 +2,19 @@ package main.api.response.calendar;
 
 import org.json.simple.JSONObject;
 
+import java.util.List;
 import java.util.TreeSet;
 
 public class CalendarResponse {
 
-    private TreeSet<Integer> years;
+    private List<Integer> years;
     private JSONObject posts;
 
-    public TreeSet<Integer> getYears() {
+    public List<Integer> getYears() {
         return years;
     }
 
-    public void setYears(TreeSet<Integer> years) {
+    public void setYears(List<Integer> years) {
         this.years = years;
     }
 

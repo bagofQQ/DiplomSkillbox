@@ -5,6 +5,7 @@ import main.api.response.SettingsResponse;
 import main.model.GlobalSettings;
 import main.model.GlobalSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -12,15 +13,25 @@ import java.util.Optional;
 @Service
 public class SettingsService {
 
-    private static final String VALUE_YES = "YES";
-    private static final String VALUE_NO = "NO";
 
-    private static final String MM_CODE = "MM";
-    private static final String PP_CODE = "PP";
-    private static final String SIP_CODE = "SIP";
+    @Value("${blog.constants.valueYes}")
+    private String VALUE_YES;
+    @Value("${blog.constants.valueNo}")
+    private String VALUE_NO;
+
+    @Value("${blog.constants.multiuserMode}")
+    private String MM_CODE;
+    @Value("${blog.constants.postPremoderation}")
+    private String PP_CODE;
+    @Value("${blog.constants.statisticsIsPublic}")
+    private String SIP_CODE;
+
+    private final GlobalSettingsRepository globalSettingsRepository;
 
     @Autowired
-    private GlobalSettingsRepository globalSettingsRepository;
+    public SettingsService(GlobalSettingsRepository globalSettingsRepository) {
+        this.globalSettingsRepository = globalSettingsRepository;
+    }
 
     public SettingsResponse getGlobalSettings() {
         SettingsResponse settingsResponse = new SettingsResponse();
@@ -32,22 +43,18 @@ public class SettingsService {
                     Optional<GlobalSettings> optionalGlobalSettings = globalSettingsRepository.findById(setting.getId());
                     if (optionalGlobalSettings.get().getValue().equals(VALUE_YES)) {
                         settingsResponse.setMultiuserMode(true);
-                    } else if (optionalGlobalSettings.get().getValue().equals(VALUE_NO)) {
-                        settingsResponse.setMultiuserMode(false);
                     }
-                } else if (setting.getCode().equals(PP_CODE)) {
+                }
+                if (setting.getCode().equals(PP_CODE)) {
                     Optional<GlobalSettings> optionalGlobalSettings = globalSettingsRepository.findById(setting.getId());
                     if (optionalGlobalSettings.get().getValue().equals(VALUE_YES)) {
                         settingsResponse.setPostPremoderation(true);
-                    } else if (optionalGlobalSettings.get().getValue().equals(VALUE_NO)) {
-                        settingsResponse.setPostPremoderation(false);
                     }
-                } else if (setting.getCode().equals(SIP_CODE)) {
+                }
+                if (setting.getCode().equals(SIP_CODE)) {
                     Optional<GlobalSettings> optionalGlobalSettings = globalSettingsRepository.findById(setting.getId());
                     if (optionalGlobalSettings.get().getValue().equals(VALUE_YES)) {
                         settingsResponse.setStatisticsIsPublic(true);
-                    } else if (optionalGlobalSettings.get().getValue().equals(VALUE_NO)) {
-                        settingsResponse.setStatisticsIsPublic(false);
                     }
                 }
             }
@@ -76,7 +83,8 @@ public class SettingsService {
                         optionalGlobalSettings.get().setValue(VALUE_NO);
                     }
                     globalSettingsRepository.save(optionalGlobalSettings.get());
-                } else if (setting.getCode().equals(PP_CODE)) {
+                }
+                if (setting.getCode().equals(PP_CODE)) {
                     Optional<GlobalSettings> optionalGlobalSettings = globalSettingsRepository.findById(setting.getId());
                     if (settingsRequest.isPostPremoderation()) {
                         optionalGlobalSettings.get().setValue(VALUE_YES);
@@ -84,7 +92,8 @@ public class SettingsService {
                         optionalGlobalSettings.get().setValue(VALUE_NO);
                     }
                     globalSettingsRepository.save(optionalGlobalSettings.get());
-                } else if (setting.getCode().equals(SIP_CODE)) {
+                }
+                if (setting.getCode().equals(SIP_CODE)) {
                     Optional<GlobalSettings> optionalGlobalSettings = globalSettingsRepository.findById(setting.getId());
                     if (settingsRequest.isStatisticsIsPublic()) {
                         optionalGlobalSettings.get().setValue(VALUE_YES);
@@ -104,6 +113,5 @@ public class SettingsService {
         globalSettings.setCode(code);
         globalSettings.setValue(VALUE_YES);
         globalSettingsRepository.save(globalSettings);
-
     }
 }

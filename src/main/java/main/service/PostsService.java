@@ -1,5 +1,6 @@
 package main.service;
 
+import main.PostsException;
 import main.api.response.posts.CountPostsResponse;
 import main.api.response.posts.PostsResponse;
 import main.api.response.posts.UserResponse;
@@ -7,52 +8,71 @@ import main.model.*;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 @Service
 public class PostsService {
 
-    private static final String MODE_RECENT = "recent";
     private static final String MODE_POPULAR = "popular";
     private static final String MODE_BEST = "best";
     private static final String MODE_EARLY = "early";
 
-    private static final String STATUS_MYPOST_INACTIVE = "inactive";
-    private static final String STATUS_MYPOST_PENDING = "pending";
-    private static final String STATUS_MYPOST_DECLINED = "declined";
-    private static final String STATUS_MYPOST_PUBLISHED = "published";
+    @Value("${blog.constants.statusMypostInactive}")
+    private String STATUS_MYPOST_INACTIVE;
+    @Value("${blog.constants.statusMypostPending}")
+    private String STATUS_MYPOST_PENDING;
+    @Value("${blog.constants.statusMypostDeclined}")
+    private String STATUS_MYPOST_DECLINED;
+    @Value("${blog.constants.statusMypostPublished}")
+    private String STATUS_MYPOST_PUBLISHED;
 
-    private static final String MODERATION_NEW = "NEW";
-    private static final String MODERATION_ACCEPTED = "ACCEPTED";
-    private static final String MODERATION_DECLINED = "DECLINED";
+    @Value("${blog.constants.moderationNew}")
+    private String MODERATION_NEW;
+    @Value("${blog.constants.moderationAccepted}")
+    private String MODERATION_ACCEPTED;
+    @Value("${blog.constants.moderationDeclined}")
+    private String MODERATION_DECLINED;
 
-    private static final int ACTIVE_POST = 1;
-    private static final int INACTIVE_POST = 0;
+    @Value("${blog.constants.activePost}")
+    private int ACTIVE_POST;
+    @Value("${blog.constants.inactivePost}")
+    private int INACTIVE_POST;
 
-    private static final String STATUS_NEW = "new";
-    private static final String STATUS_DECLINED = "declined";
-    private static final String STATUS_ACCEPTED = "accepted";
+    @Value("${blog.constants.statusNew}")
+    private String STATUS_NEW;
+    @Value("${blog.constants.statusDeclined}")
+    private String STATUS_DECLINED;
+    @Value("${blog.constants.statusAccepted}")
+    private String STATUS_ACCEPTED;
 
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final PostVotesRepository postVotesRepository;
+    private final PostCommentRepository postCommentRepository;
+    private final TagRepository tagRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    public PostsService(UserRepository userRepository,
+                        PostRepository postRepository,
+                        PostVotesRepository postVotesRepository,
+                        PostCommentRepository postCommentRepository,
+                        TagRepository tagRepository) {
+        this.userRepository = userRepository;
+        this.postRepository = postRepository;
+        this.postVotesRepository = postVotesRepository;
+        this.postCommentRepository = postCommentRepository;
+        this.tagRepository = tagRepository;
+    }
 
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private PostVotesRepository postVotesRepository;
-
-    @Autowired
-    private PostCommentRepository postCommentRepository;
-
-    @Autowired
-    private TagRepository tagRepository;
 
     public CountPostsResponse getPosts(int offset, int limit, String mode) {
         CountPostsResponse countPostsResponse = new CountPostsResponse();
@@ -178,6 +198,13 @@ public class PostsService {
 
     }
 
+    private void addPostsList(Page<Post> page, List<PostsResponse> postsList) {
+        for (Post post : page) {
+            PostsResponse postsResponse = new PostsResponse();
+            postsList.add(getPostsResponse(post, postsResponse));
+        }
+    }
+
     private PostsResponse getPostsResponse(Post post, PostsResponse postsResponse) {
 
         postsResponse.setId(post.getId());
@@ -185,31 +212,29 @@ public class PostsService {
         long timestamp = date.getTime() / 1000;
         postsResponse.setTimestamp(timestamp);
         UserResponse userResponse = new UserResponse();
-        Optional<User> optionalUser = userRepository.findById(post.getUser().getId());
-        userResponse.setName(optionalUser.get().getName());
-        userResponse.setId(optionalUser.get().getId());
+        User user = userRepository.findById(post.getUser().getId()).orElseThrow(PostsException::new);
+        userResponse.setName(user.getName());
+        userResponse.setId(user.getId());
         postsResponse.setUser(userResponse);
         postsResponse.setTitle(post.getTitle());
-        String cleanText = Jsoup.clean(post.getText(), Whitelist.none());
-
-        if (cleanText.substring(40, 50).contains(" ")) {
-            String announce = cleanText.replaceAll("(\\A.{40}\\S+)(.+)", "$1");
-            postsResponse.setAnnounce(announce + "...");
-        } else {
-            String announce = cleanText.replaceAll("(\\A.{40})(.+)", "$1");
-            postsResponse.setAnnounce(announce + "...");
-        }
-
-        List<PostVotes> likeList = postVotesRepository.findLike(post.getId());
-        List<PostVotes> dislikeList = postVotesRepository.findDislike(post.getId());
-        postsResponse.setLikeCount(likeList.size());
-        postsResponse.setDislikeCount(dislikeList.size());
-
-        List<PostComment> commentList = postCommentRepository.findComment(post.getId());
-        postsResponse.setCommentCount(commentList.size());
+        postsResponse.setAnnounce(getAnnounce(post.getText()));
+        postsResponse.setLikeCount(postVotesRepository.findLike(post.getId()).size());
+        postsResponse.setDislikeCount(postVotesRepository.findDislike(post.getId()).size());
+        postsResponse.setCommentCount(postCommentRepository.findComment(post.getId()).size());
         postsResponse.setViewCount(post.getViewCount());
 
         return postsResponse;
+    }
+
+    private String getAnnounce(String text) {
+        String cleanText = Jsoup.clean(text, Whitelist.none());
+        if (cleanText.substring(40, 50).contains(" ")) {
+            String announce = cleanText.replaceAll("(\\A.{40}\\S+)(.+)", "$1");
+            return announce + "...";
+        } else {
+            String announce = cleanText.replaceAll("(\\A.{40})(.+)", "$1");
+            return announce + "...";
+        }
     }
 
     private Date getDateNow() {
@@ -223,10 +248,4 @@ public class PostsService {
         return pageable;
     }
 
-    private void addPostsList(Page<Post> page, List<PostsResponse> postsList) {
-        for (Post post : page) {
-            PostsResponse postsResponse = new PostsResponse();
-            postsList.add(getPostsResponse(post, postsResponse));
-        }
-    }
 }

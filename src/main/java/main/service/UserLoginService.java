@@ -1,5 +1,6 @@
 package main.service;
 
+import main.PostsException;
 import main.api.response.LogoutResponse;
 import main.api.response.login.UserLoginInfoResponse;
 import main.api.response.login.UserLoginResponse;
@@ -12,46 +13,41 @@ import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class UserLoginService {
 
     private HashMap<String, Integer> identifierMap = new HashMap<>();
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final HttpSession httpSession;
 
     @Autowired
-    private HttpSession httpSession;
+    public UserLoginService(UserRepository userRepository, HttpSession httpSession) {
+        this.userRepository = userRepository;
+        this.httpSession = httpSession;
+    }
 
     public UserLoginResponse getUserLoginInfo(String email, String password) {
         UserLoginResponse userLoginResponse = new UserLoginResponse();
-
         String identifier = httpSession.getId();
         List<User> findUser = userRepository.findUser(email, password);
-        if(findUser.size() == 1){
-            for(User user : findUser){
-                identifierMap.put(identifier, user.getId());
-                return setUserInfo(user, userLoginResponse);
-            }
+        if (findUser.size() != 1) {
+            userLoginResponse.setResult(false);
+            return userLoginResponse;
         }
-        userLoginResponse.setResult(false);
-        return userLoginResponse;
-
+        identifierMap.put(identifier, findUser.get(0).getId());
+        return setUserInfo(findUser.get(0), userLoginResponse);
     }
 
 
-
-    public UserLoginResponse getUserCheck() {
+    public UserLoginResponse checkUser() {
         UserLoginResponse checkUserLoginResponse = new UserLoginResponse();
         if (identifierMap.size() > 0) {
-            String identifier = httpSession.getId();
             for (Map.Entry<String, Integer> f : identifierMap.entrySet()) {
-                if (f.getKey().equals(identifier)) {
-                    int q = identifierMap.get(identifier);
-                    Optional<User> optionalUser = userRepository.findById(q);
-                    return setUserInfo(optionalUser.get(), checkUserLoginResponse);
+                if (f.getKey().equals(httpSession.getId())) {
+                    User user = userRepository.findById(identifierMap.get(httpSession.getId())).orElseThrow(PostsException::new);
+                    return setUserInfo(user, checkUserLoginResponse);
                 }
             }
         }
@@ -59,18 +55,15 @@ public class UserLoginService {
         return checkUserLoginResponse;
     }
 
-    private UserLoginResponse setUserInfo(User user, UserLoginResponse userLoginResponse){
+    private UserLoginResponse setUserInfo(User user, UserLoginResponse userLoginResponse) {
         UserLoginInfoResponse userLoginInfoResponse = new UserLoginInfoResponse();
         userLoginInfoResponse.setId(user.getId());
         userLoginInfoResponse.setName(user.getName());
         userLoginInfoResponse.setPhoto(user.getPhoto());
         userLoginInfoResponse.setEmail(user.getEmail());
-        int i = user.getIsModerator();
-        userLoginInfoResponse.setModerationCount(i);
-        if (i == 0) {
-            userLoginInfoResponse.setModeration(false);
-            userLoginInfoResponse.setSettings(false);
-        } else if (i == 1) {
+        int isModerator = user.getIsModerator();
+        userLoginInfoResponse.setModerationCount(isModerator);
+        if (isModerator == 1) {
             userLoginInfoResponse.setModeration(true);
             userLoginInfoResponse.setSettings(true);
         }
@@ -81,16 +74,7 @@ public class UserLoginService {
 
     public LogoutResponse logoutUser() {
         LogoutResponse logoutResponse = new LogoutResponse();
-        String identifier = httpSession.getId();
-        //TODO изменен выход
-//        for (Map.Entry<String, Integer> f : identifierMap.entrySet()) {
-//            if (f.getKey().equals(identifier)) {
-//                identifierMap.remove(identifier);
-//                logoutResponse.setResult(true);
-//                return logoutResponse;
-//            }
-//        }
-        identifierMap.remove(identifier);
+        identifierMap.remove(httpSession.getId());
         logoutResponse.setResult(true);
         return logoutResponse;
     }

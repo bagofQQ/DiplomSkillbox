@@ -28,6 +28,12 @@ public interface PostVotesRepository extends CrudRepository<PostVotes, Integer> 
             nativeQuery = true)
     List<PostVotes> findPostVotes(@Param("postId") int postId);
 
+    String QUERY_VOTE_ONE = "select * from post_votes where post_id = :postId AND user_id = :userId LIMIT 1";
+
+    @Query(value = QUERY_VOTE_ONE,
+            nativeQuery = true)
+    List<PostVotes> findOnePostVotes(@Param("postId") int postId, @Param("userId") int userId);
+
     String QUERY_COUNT_LIKE = "select count(*) from post_votes where value = 1";
 
     @Query(value = QUERY_COUNT_LIKE,

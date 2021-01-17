@@ -9,27 +9,27 @@ import org.springframework.stereotype.Service;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.TreeMap;
 
 @Service
 public class CalendarService {
 
+    private final PostRepository postRepository;
+
     @Autowired
-    private PostRepository postRepository;
+    public CalendarService(PostRepository postRepository) {
+        this.postRepository = postRepository;
+    }
 
     public CalendarResponse getCalendar(int year) {
         CalendarResponse calendarResponse = new CalendarResponse();
+        List<Integer> years = postRepository.findCalendarYears();
 
-        TreeSet<Integer> years = new TreeSet<>();
-        Calendar calendar = Calendar.getInstance();
-        int yearCalendar = calendar.get(1);
-
-        years.add(yearCalendar);
-        years.add(yearCalendar - 1);
         TreeMap<String, Integer> posts = new TreeMap<>();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-        List<Post> postList = postRepository.findCalendarYear(year);
+        List<Post> postList = postRepository.findPostsYear(year);
         for (Post f : postList) {
             Date date = f.getTime();
             int countDate = postRepository.countDate(dateFormat.format(date));

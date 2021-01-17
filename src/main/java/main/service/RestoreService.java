@@ -4,31 +4,37 @@ import main.api.response.restore.RestoreResponse;
 import main.model.User;
 import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 
 
 @Service
 public class RestoreService {
 
-    private String username = "username";
-    private String password = "password";
+    @Value("${blog.constants.usernameGoogleMail}")
+    private String username;
+    @Value("${blog.constants.passwordGoogleMail}")
+    private String password;
+
+    private final UserRepository userRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    public RestoreService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
-    public RestoreResponse get(String email) {
+    public RestoreResponse restoreEmail(String email) {
         RestoreResponse restoreResponse = new RestoreResponse();
 
         List<User> findUserRestore = userRepository.findUserRestore(email);
-        if(findUserRestore.size() == 1){
-            for(User f : findUserRestore){
+        if (findUserRestore.size() == 1) {
+            for (User f : findUserRestore) {
                 String code = f.getCode();
                 sendEmail(email, code);
                 restoreResponse.setResult(true);
@@ -38,18 +44,6 @@ public class RestoreService {
         restoreResponse.setResult(false);
         return restoreResponse;
 
-//        Iterable<User> usersIterable = userRepository.findAll();
-//        for (User f : usersIterable) {
-//            Optional<User> optionalUser = userRepository.findById(f.getId());
-//            if (email.equals(optionalUser.get().getEmail())) {
-//                String code = optionalUser.get().getCode();
-//                sendEmail(email, code);
-//                restoreResponse.setResult(true);
-//                return restoreResponse;
-//            }
-//        }
-//        restoreResponse.setResult(false);
-//        return restoreResponse;
     }
 
     private void sendEmail(String email, String code) {

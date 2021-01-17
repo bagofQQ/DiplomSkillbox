@@ -2,6 +2,7 @@ package main.service;
 
 import main.api.response.image.ErrorsImageResponse;
 import main.api.response.image.ImageResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,18 +16,12 @@ import java.util.Random;
 @Service
 public class ImageService {
 
-    private static final String FOLDER_INPUT_IMAGE = "upload";
-    private static final String ERROR_IMAGE = "Размер файла превышает допустимый размер";
-    private static final String ERROR_FORMAT = "Файл не соответствует формату. Поддерживаемые форматы: jpg и png.";
-
-    public ImageResponse getImageError() {
-        ImageResponse imageResponse = new ImageResponse();
-        ErrorsImageResponse errorsImageResponse = new ErrorsImageResponse();
-        errorsImageResponse.setImage(ERROR_IMAGE);
-        imageResponse.setErrors(errorsImageResponse);
-        imageResponse.setResult(false);
-        return imageResponse;
-    }
+    @Value("${blog.constants.errorImage}")
+    private String ERROR_IMAGE;
+    @Value("${blog.constants.errorFormat}")
+    private String ERROR_FORMAT;
+    @Value("${blog.constants.folderInputImage}")
+    private String FOLDER_INPUT_IMAGE;
 
     public String writeImage(MultipartFile image) throws IOException {
         Path path = Path.of(getPath() + "/"
@@ -39,7 +34,6 @@ public class ImageService {
     }
 
     private String getPath() {
-
         String folderCode = getGeneratedSecretCode();
         String folder1 = folderCode.substring(0, 2);
         String folder2 = folderCode.substring(2, 4);
@@ -51,7 +45,19 @@ public class ImageService {
         }
         new File(path.toString()).mkdirs();
         return path.toString();
+    }
 
+    public ImageResponse getImageError() {
+        ImageResponse imageResponse = new ImageResponse();
+        ErrorsImageResponse errorsImageResponse = new ErrorsImageResponse();
+        errorsImageResponse.setImage(ERROR_IMAGE);
+        imageResponse.setErrors(errorsImageResponse);
+        imageResponse.setResult(false);
+        return imageResponse;
+    }
+
+    public String parseDimension(String filename) {
+        return filename.replaceAll("(.+)(\\.)(\\w{3})$", "$3");
     }
 
     public ImageResponse getFormatError() {
@@ -68,7 +74,6 @@ public class ImageService {
         int rightLimit = 122;
         int targetStringLength = 22;
         Random random = new Random();
-
         String generatedString = random.ints(leftLimit, rightLimit + 1)
                 .filter(i -> (i <= 57 || i >= 97))
                 .limit(targetStringLength)

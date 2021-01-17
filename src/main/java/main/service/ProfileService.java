@@ -1,5 +1,6 @@
 package main.service;
 
+import main.PostsException;
 import main.api.request.profile.ProfileRequest;
 import main.api.request.profile.ProfileRequestWithPhoto;
 import main.api.response.profile.ErrorsProfileResponse;
@@ -8,204 +9,143 @@ import main.model.User;
 import main.model.UserRepository;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
-import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.Random;
 
 @Service
 public class ProfileService {
 
+    @Value("${blog.constants.imageWidth}")
+    private int IMAGE_WIDTH;
+    @Value("${blog.constants.imageHeight}")
+    private int IMAGE_HEIGHT;
 
-    private final int IMAGE_WIDTH = 36;
-    private final int IMAGE_HEIGHT = 36;
+    @Value("${blog.constants.checkName}")
+    private String CHECK_NAME;
+    @Value("${blog.constants.folderInputImage2}")
+    private String FOLDER_INPUT_IMAGE;
+    @Value("${blog.constants.errorEmail}")
+    private String ERROR_EMAIL;
+    @Value("${blog.constants.errorPhoto}")
+    private String ERROR_PHOTO;
+    @Value("${blog.constants.errorName}")
+    private String ERROR_NAME;
+    @Value("${blog.constants.errorPassword}")
+    private String ERROR_PASSWORD;
+    @Value("${blog.constants.size}")
+    private int SIZE;
 
-    private static final String CHECK_NAME = "([а-яА-Я]*)";
-    private static final String FOLDER_INPUT_IMAGE = "avatars";
-    private static final String ERROR_EMAIL = "Этот e-mail уже зарегистрирован";
-    private static final String ERROR_PHOTO = "Фото слишком большое, нужно не более 5 Мб";
-    private static final String ERROR_NAME = "Имя указано неверно";
-    private static final String ERROR_PASSWORD = "Пароль короче 6-ти символов";
-    private static final int SIZE = 5242880;
+    private final UserRepository userRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private HttpSession httpSession;
+    public ProfileService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public ProfileResponse updateUserProfileWithPhoto(ProfileRequestWithPhoto profile, int idUser) throws IOException {
         ProfileResponse profileResponse = new ProfileResponse();
-        ErrorsProfileResponse errorsProfileResponse = new ErrorsProfileResponse();
+        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
 
-        Optional<User> optionalUser = userRepository.findById(idUser);
-
-        HashMap<String, String> errors = checkProfileWithPhotoErrors(profile, optionalUser);
+        HashMap<String, String> errors = checkProfileWithPhotoErrors(profile.getEmail(), profile.getName(), profile.getPassword(), profile.getPhoto(), user);
         if (!errors.isEmpty()) {
-            errorsProfileResponse.setEmail(errors.get("email"));
-            errorsProfileResponse.setName(errors.get("name"));
-            errorsProfileResponse.setPassword(errors.get("password"));
-            errorsProfileResponse.setPhoto(errors.get("photo"));
-            profileResponse.setErrors(errorsProfileResponse);
-            profileResponse.setResult(false);
-            return profileResponse;
+            return setErrors(errors);
         }
-        String email = profile.getEmail();
-        String name = profile.getName();
-        String password = profile.getPassword();
-
-        optionalUser.get().setPhoto(writeImage(profile.getPhoto()));
-
-        if (email != null) {
-            optionalUser.get().setEmail(email);
-        }
-        if (name != null) {
-            optionalUser.get().setName(name);
-        }
-        if (password != null) {
-            optionalUser.get().setPassword(password);
-        }
-        userRepository.save(optionalUser.get());
+        user.setPhoto(writeImage(profile.getPhoto()));
+        setUser(profile.getEmail(), profile.getName(), profile.getPassword(), user);
         profileResponse.setResult(true);
         return profileResponse;
     }
-
 
     public ProfileResponse updateUserProfile(ProfileRequest profile, int idUser) {
         ProfileResponse profileResponse = new ProfileResponse();
-        ErrorsProfileResponse errorsProfileResponse = new ErrorsProfileResponse();
+        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
 
-        Optional<User> optionalUser = userRepository.findById(idUser);
-
-        HashMap<String, String> errors = checkProfileErrors(profile, optionalUser);
+        HashMap<String, String> errors = checkProfileErrors(profile.getEmail(), profile.getName(), profile.getPassword(), user);
         if (!errors.isEmpty()) {
-            errorsProfileResponse.setEmail(errors.get("email"));
-            errorsProfileResponse.setName(errors.get("name"));
-            errorsProfileResponse.setPassword(errors.get("password"));
-            errorsProfileResponse.setPhoto(errors.get("photo"));
-            profileResponse.setErrors(errorsProfileResponse);
-            profileResponse.setResult(false);
-            return profileResponse;
+            return setErrors(errors);
         }
-
-        String email = profile.getEmail();
-        String name = profile.getName();
-        String password = profile.getPassword();
 
         if (profile.getRemovePhoto() == 1) {
-            optionalUser.get().setPhoto(null);
+            user.setPhoto(null);
         }
-        if (email != null) {
-            optionalUser.get().setEmail(email);
-        }
-        if (name != null) {
-            optionalUser.get().setName(name);
-        }
-        if (password != null) {
-            optionalUser.get().setPassword(password);
-        }
-        userRepository.save(optionalUser.get());
+        setUser(profile.getEmail(), profile.getName(), profile.getPassword(), user);
         profileResponse.setResult(true);
         return profileResponse;
     }
 
-    private HashMap<String, String> checkProfileErrors(ProfileRequest profile, Optional<User> optionalUser) {
+    private HashMap<String, String> checkProfileErrors(String email, String name, String password, User user) {
         HashMap<String, String> errors = new HashMap<>();
-        if (profile.getEmail() != null) {
-            if (!profile.getEmail().equals(optionalUser.get().getEmail())) {
-                if (checkEmail(profile.getEmail())) {
-                    errors.put("email", ERROR_EMAIL);
-                }
-            }
+        if (email != null && !email.equals(user.getEmail()) && userRepository.countEmail(email) > 0) {
+            errors.put("email", ERROR_EMAIL);
         }
-        if (profile.getName() != null) {
-            if (!profile.getName().equals(optionalUser.get().getName())) {
-                if (!profile.getName().matches(CHECK_NAME)) {
-                    errors.put("name", ERROR_NAME);
-                }
-            }
+        if (name != null && !name.equals(user.getName()) && !name.matches(CHECK_NAME)) {
+            errors.put("name", ERROR_NAME);
         }
-        if (profile.getPassword() != null) {
-            if (profile.getPassword().length() < 6) {
-                errors.put("password", ERROR_PASSWORD);
-            }
+        if (password != null && password.length() < 6) {
+            errors.put("password", ERROR_PASSWORD);
         }
-
         return errors;
     }
 
-    private HashMap<String, String> checkProfileWithPhotoErrors(ProfileRequestWithPhoto profile, Optional<User> optionalUser) {
-        HashMap<String, String> errors = new HashMap<>();
-
-        if (profile.getEmail() != null) {
-            if (!profile.getEmail().equals(optionalUser.get().getEmail())) {
-                if (checkEmail(profile.getEmail())) {
-                    errors.put("email", ERROR_EMAIL);
-                }
-            }
-        }
-        if (profile.getName() != null) {
-            if (!profile.getName().equals(optionalUser.get().getName())) {
-                if (!profile.getName().matches(CHECK_NAME)) {
-                    errors.put("name", ERROR_NAME);
-                }
-            }
-        }
-        if (profile.getPassword() != null) {
-            if (profile.getPassword().length() < 6) {
-                errors.put("password", ERROR_PASSWORD);
-            }
-        }
-
-        if (profile.getPhoto().getSize() > SIZE) {
+    private HashMap<String, String> checkProfileWithPhotoErrors(String email, String name, String password, MultipartFile imageFile, User user) {
+        HashMap<String, String> errors = checkProfileErrors(email, name, password, user);
+        if (imageFile.getSize() > SIZE) {
             errors.put("photo", ERROR_PHOTO);
         }
         return errors;
     }
 
-    private boolean checkEmail(String email) {
-        int countEmail = userRepository.countEmail(email);
-        if (countEmail > 0) {
-            return true;
-        } else {
-            return false;
+    private ProfileResponse setErrors(HashMap<String, String> errors) {
+        ProfileResponse profileResponse = new ProfileResponse();
+        ErrorsProfileResponse errorsProfileResponse = new ErrorsProfileResponse();
+        errorsProfileResponse.setEmail(errors.get("email"));
+        errorsProfileResponse.setName(errors.get("name"));
+        errorsProfileResponse.setPassword(errors.get("password"));
+        errorsProfileResponse.setPhoto(errors.get("photo"));
+        profileResponse.setErrors(errorsProfileResponse);
+        profileResponse.setResult(false);
+        return profileResponse;
+    }
+
+    private void setUser(String email, String name, String password, User user) {
+        if (email != null) {
+            user.setEmail(email);
         }
+        if (name != null) {
+            user.setName(name);
+        }
+        if (password != null) {
+            user.setPassword(password);
+        }
+        userRepository.save(user);
     }
 
     public String writeImage(MultipartFile imageFile) throws IOException {
-
         BufferedImage newImage = ImageIO.read(imageFile.getInputStream());
-
         BufferedImage image = Scalr.resize(newImage, IMAGE_WIDTH, IMAGE_HEIGHT);
-
         Path path = Path.of(getPath() + "/"
                 + imageFile.getOriginalFilename());
-
         File newFile = new File(path.toString());
         ImageIO.write(image, "jpg", newFile);
-
         return path.toString();
     }
 
     private String getPath() {
-
         String folderCode = getGeneratedSecretCode();
         String folder1 = folderCode.substring(0, 2);
         String folder2 = folderCode.substring(2, 4);
         String folder3 = folderCode.substring(4, 6);
-
-
         Path path = Path.of(FOLDER_INPUT_IMAGE + "/" + folder1 + "/" + folder2 + "/" + folder3);
-
         if (Files.exists(path)) {
             getPath();
         }

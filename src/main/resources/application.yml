@@ -26,4 +26,58 @@ blog:
   copyright: Алексеев Антон
   copyrightFrom: 2005
 
+  constants:
+    errorTitle: 'Заголовок не установлен или слишком короткий'
+    errorTitle2: 'Заголовок слишком короткий'
+    errorText: 'Текст публикации слишком короткий'
+    errorText2: 'Текст комментария не задан или слишком короткий'
+    valueYes: 'YES'
+    valueNo: 'NO'
+    moderator: 1
+    user: 0
+    folderInputImage: 'upload'
+    errorImage: 'Размер файла превышает допустимый размер'
+    errorFormat: 'Файл не соответствует формату. Поддерживаемые форматы: jpg и png.'
+    accept: 'accept'
+    decline: 'decline'
+    errorCode: 'Ссылка для восстановления пароля устарела.<a href="/auth/restore">Запросить ссылку снова</a>'
+    errorPassword: 'Пароль короче 6-ти символов'
+    errorCaptcha: 'Код с картинки введён неверно'
+    modeRecent: 'recent'
+    modePopular: 'popular'
+    modeBest: 'best'
+    modeEarly: 'early'
+    statusMypostInactive: 'inactive'
+    statusMypostPending: 'pending'
+    statusMypostDeclined: 'declined'
+    statusMypostPublished: 'published'
+    moderationNew: 'NEW'
+    moderationAccepted: 'ACCEPTED'
+    moderationDeclined: 'DECLINED'
+    activePost: 1
+    inactivePost: 0
+    statusNew: 'new'
+    statusDeclined: 'declined'
+    statusAccepted: 'accepted'
+    imageWidth: 36
+    imageHeight: 36
+    checkName: '([а-яА-Я]*)'
+    folderInputImage2: 'avatars'
+    errorEmail: 'Этот e-mail уже зарегистрирован'
+    errorPhoto: 'Фото слишком большое, нужно не более 5 Мб'
+    errorName: 'Имя указано неверно'
+    size: 5242880
+    usernameGoogleMail: 'username'
+    passwordGoogleMail: 'password'
+    multiuserMode: 'MM'
+    postPremoderation: 'PP'
+    statisticsIsPublic: 'SIP'
+    captchaWidth: 110
+    captchaHeight: 300
+    formatJpg: 'jpg'
+    formatPng: 'png'
+
+
+
+
 
