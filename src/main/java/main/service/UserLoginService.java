@@ -87,4 +87,7 @@ public class UserLoginService {
         this.identifierMap = identifierMap;
     }
 
+    public boolean idUserAuthorized(){
+        return identifierMap.containsKey(httpSession.getId());
+    }
 }

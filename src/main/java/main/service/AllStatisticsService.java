@@ -28,18 +28,21 @@ public class AllStatisticsService {
     private final PostVotesRepository postVotesRepository;
     private final UserRepository userRepository;
     private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
-    public AllStatisticsService(GlobalSettingsRepository globalSettingsRepository, PostRepository postRepository, PostVotesRepository postVotesRepository, UserRepository userRepository, HttpSession httpSession) {
+    public AllStatisticsService(GlobalSettingsRepository globalSettingsRepository, PostRepository postRepository, PostVotesRepository postVotesRepository, UserRepository userRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.globalSettingsRepository = globalSettingsRepository;
         this.postRepository = postRepository;
         this.postVotesRepository = postVotesRepository;
         this.userRepository = userRepository;
         this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
 
-    public ResponseEntity<StatisticsResponse> getStatistics(HashMap<String, Integer> identifierMap) {
+    public ResponseEntity<StatisticsResponse> getStatistics() {
+        HashMap<String, Integer> identifierMap = userLoginService.getIdentifierMap();
         if (!globalSettingsRepository.findValueStatisticsIsPublic().equals(VALUE_YES)) {
             if (!identifierMap.containsKey(httpSession.getId()) && userRepository.findById(identifierMap.get(httpSession.getId())).get().getIsModerator() != MODERATOR) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -63,8 +66,9 @@ public class AllStatisticsService {
         return statisticsResponse;
     }
 
-    public StatisticsResponse getUserStat(int idUser) {
+    public StatisticsResponse getUserStat() {
         StatisticsResponse statisticsResponse = new StatisticsResponse();
+        int idUser = userLoginService.getIdentifierMap().get(httpSession.getId());
         int countActivePosts = postRepository.countActivePostsUser(idUser);
         if (countActivePosts > 0) {
             setStat(statisticsResponse,

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -46,15 +47,19 @@ public class ProfileService {
     private int SIZE;
 
     private final UserRepository userRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
-    public ProfileService(UserRepository userRepository) {
+    public ProfileService(UserRepository userRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.userRepository = userRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
-    public ProfileResponse updateUserProfileWithPhoto(ProfileRequestWithPhoto profile, int idUser) throws IOException {
+    public ProfileResponse updateUserProfileWithPhoto(ProfileRequestWithPhoto profile) throws IOException {
         ProfileResponse profileResponse = new ProfileResponse();
-        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+        User user = userRepository.findById(userLoginService.getIdentifierMap().get(httpSession.getId())).orElseThrow(PostsException::new);
 
         HashMap<String, String> errors = checkProfileWithPhotoErrors(profile.getEmail(), profile.getName(), profile.getPassword(), profile.getPhoto(), user);
         if (!errors.isEmpty()) {
@@ -66,9 +71,9 @@ public class ProfileService {
         return profileResponse;
     }
 
-    public ProfileResponse updateUserProfile(ProfileRequest profile, int idUser) {
+    public ProfileResponse updateUserProfile(ProfileRequest profile) {
         ProfileResponse profileResponse = new ProfileResponse();
-        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+        User user = userRepository.findById(userLoginService.getIdentifierMap().get(httpSession.getId())).orElseThrow(PostsException::new);
 
         HashMap<String, String> errors = checkProfileErrors(profile.getEmail(), profile.getName(), profile.getPassword(), user);
         if (!errors.isEmpty()) {

@@ -15,14 +15,12 @@ import main.api.response.moderation.ModerationResponse;
 import main.api.response.profile.ProfileResponse;
 import main.api.response.tags.TagsResponse;
 import main.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Calendar;
 
@@ -35,9 +33,6 @@ public class ApiGeneralController {
     private String FORMAT_JPG;
     @Value("${blog.constants.formatPng}")
     private String FORMAT_PNG;
-
-    @Autowired
-    private HttpSession httpSession;
 
     private final InitResponse initResponse;
     private final SettingsService settingsService;
@@ -84,9 +79,7 @@ public class ApiGeneralController {
 
     @PutMapping("/api/settings")
     public ResponseEntity<SettingsResponse> putSettings(@RequestBody SettingsRequest settingsRequest) {
-
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
+        if(userLoginService.idUserAuthorized()){
             return new ResponseEntity(settingsService.putGlobalSettings(settingsRequest), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -99,32 +92,24 @@ public class ApiGeneralController {
 
     @PostMapping(value = "/api/profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProfileResponse> updateProfileWithPhoto(@ModelAttribute ProfileRequestWithPhoto profile) throws IOException {
-
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(profileService.updateUserProfileWithPhoto(profile, idUser), HttpStatus.OK);
+        if(userLoginService.idUserAuthorized()){
+            return new ResponseEntity(profileService.updateUserProfileWithPhoto(profile), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-
     }
 
     @PostMapping(value = "/api/profile/my", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProfileResponse> updateMyProfile(@RequestBody ProfileRequest profile) {
-
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(profileService.updateUserProfile(profile, idUser), HttpStatus.OK);
+        if(userLoginService.idUserAuthorized()){
+            return new ResponseEntity(profileService.updateUserProfile(profile), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-
     }
 
 
     @PostMapping("/api/image")
     public ResponseEntity<?> image(@ModelAttribute ImageRequest imageP) throws IOException {
-        if (!userLoginService.getIdentifierMap().containsKey(httpSession.getId())) {
+        if (!userLoginService.idUserAuthorized()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
@@ -142,42 +127,34 @@ public class ApiGeneralController {
 
     @PostMapping("/api/moderation")
     public ResponseEntity<ModerationResponse> moderation(@RequestBody ModerationRequest request) {
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
+        if(userLoginService.idUserAuthorized()){
             return new ResponseEntity(moderationService.getMod(
                     request.getPostId(),
-                    request.getDecision(),
-                    idUser), HttpStatus.OK);
+                    request.getDecision()), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-
     }
 
     @PostMapping("/api/comment")
     public ResponseEntity<CommentResponse> comment(@RequestBody CommentRequest commentRequest) {
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return commentService.postComment(commentRequest, idUser);
+        if(userLoginService.idUserAuthorized()){
+            return commentService.postComment(commentRequest);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 
     @GetMapping("/api/statistics/all")
     public ResponseEntity<StatisticsResponse> allStat() {
-        return allStatisticsService.getStatistics(userLoginService.getIdentifierMap());
+        return allStatisticsService.getStatistics();
     }
 
     @GetMapping("/api/statistics/my")
     public ResponseEntity<StatisticsResponse> userStat() {
-
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(allStatisticsService.getUserStat(idUser), HttpStatus.OK);
+        if(userLoginService.idUserAuthorized()){
+            return new ResponseEntity(allStatisticsService.getUserStat(), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+
     }
 
     @GetMapping("/api/calendar")

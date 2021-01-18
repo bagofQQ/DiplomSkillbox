@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,18 +60,22 @@ public class PostsService {
     private final PostVotesRepository postVotesRepository;
     private final PostCommentRepository postCommentRepository;
     private final TagRepository tagRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
     public PostsService(UserRepository userRepository,
                         PostRepository postRepository,
                         PostVotesRepository postVotesRepository,
                         PostCommentRepository postCommentRepository,
-                        TagRepository tagRepository) {
+                        TagRepository tagRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.postVotesRepository = postVotesRepository;
         this.postCommentRepository = postCommentRepository;
         this.tagRepository = tagRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
 
@@ -134,10 +139,10 @@ public class PostsService {
         return countPostsResponse;
     }
 
-    public CountPostsResponse getModerationPosts(int idModer, int offset, int limit, String status) {
-
+    public CountPostsResponse getModerationPosts(int offset, int limit, String status) {
         CountPostsResponse countPostsResponse = new CountPostsResponse();
         List<PostsResponse> postsList = new ArrayList<>();
+        int idModer = userLoginService.getIdentifierMap().get(httpSession.getId());
         int offsetPageable = offset / 10;
 
         if (status.equals(STATUS_NEW)) {
@@ -158,10 +163,10 @@ public class PostsService {
 
     }
 
-    public CountPostsResponse getMyPosts(int idUser, int offset, int limit, String status) {
-
+    public CountPostsResponse getMyPosts(int offset, int limit, String status) {
         CountPostsResponse countPostsResponse = new CountPostsResponse();
         List<PostsResponse> postsList = new ArrayList<>();
+        int idUser = userLoginService.getIdentifierMap().get(httpSession.getId());
         int offsetPageable = offset / 10;
 
         if (status.equals(STATUS_MYPOST_INACTIVE)) {
@@ -238,14 +243,11 @@ public class PostsService {
     }
 
     private Date getDateNow() {
-        Calendar calendar = Calendar.getInstance();
-        Date date = calendar.getTime();
-        return date;
+        return Calendar.getInstance().getTime();
     }
 
     private Pageable getPageable(int offsetPageable, int limit) {
-        Pageable pageable = PageRequest.of(offsetPageable, limit);
-        return pageable;
+        return PageRequest.of(offsetPageable, limit);
     }
 
 }

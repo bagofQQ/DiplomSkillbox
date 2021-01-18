@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.util.Calendar;
 
 @Service
@@ -20,19 +21,23 @@ public class ModerationService {
     private String DECLINE;
 
     private final PostRepository postRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
-    public ModerationService(PostRepository postRepository) {
+    public ModerationService(PostRepository postRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.postRepository = postRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
-    public ModerationResponse getMod(int postId, String decision, int idModer) {
+    public ModerationResponse getMod(int postId, String decision) {
         Post post = postRepository.findById(postId).orElseThrow(PostsException::new);
         if (decision.equals(ACCEPT)) {
-            return getModerationResponse(post, idModer, ModerationStatus.ACCEPTED);
+            return getModerationResponse(post, userLoginService.getIdentifierMap().get(httpSession.getId()), ModerationStatus.ACCEPTED);
         }
         if (decision.equals(DECLINE)) {
-            return getModerationResponse(post, idModer, ModerationStatus.DECLINED);
+            return getModerationResponse(post, userLoginService.getIdentifierMap().get(httpSession.getId()), ModerationStatus.DECLINED);
         }
         return new ModerationResponse(false);
     }

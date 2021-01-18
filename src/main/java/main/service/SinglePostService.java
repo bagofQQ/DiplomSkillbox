@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpSession;
 import java.util.*;
 
 @Service
@@ -25,23 +26,29 @@ public class SinglePostService {
     private final PostRepository postRepository;
     private final PostVotesRepository postVotesRepository;
     private final PostCommentRepository postCommentRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
-    public SinglePostService(UserRepository userRepository, PostRepository postRepository, PostVotesRepository postVotesRepository, PostCommentRepository postCommentRepository) {
+    public SinglePostService(UserRepository userRepository, PostRepository postRepository, PostVotesRepository postVotesRepository, PostCommentRepository postCommentRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.postVotesRepository = postVotesRepository;
         this.postCommentRepository = postCommentRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
     @Transactional
-    public ResponseEntity<SinglePostResponse> getSinglePost(int id, String identifier, HashMap<String, Integer> identifierMap) {
+    public ResponseEntity<SinglePostResponse> getSinglePost(int id) {
         Post post = postRepository.findById(id).orElseThrow(PostsException::new);
-        setView(identifierMap, identifier, post);
-        return new ResponseEntity<>(setSinglPost(post), HttpStatus.OK);
+        setView(post);
+        return new ResponseEntity<SinglePostResponse>(setSinglPost(post), HttpStatus.OK);
     }
 
-    private void setView(HashMap<String, Integer> identifierMap, String identifier, Post post) {
+    private void setView(Post post) {
+        HashMap<String, Integer> identifierMap = userLoginService.getIdentifierMap();
+        String identifier = httpSession.getId();
         if (identifierMap.containsKey(identifier)) {
             User user = userRepository.findById(identifierMap.get(identifier)).orElseThrow(PostsException::new);
             if (user.getIsModerator() == USER & post.getUser().getId() != user.getId()) {

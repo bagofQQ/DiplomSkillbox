@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,22 +33,28 @@ public class AddingPostService {
     private final TagRepository tagRepository;
     private final TagToPostRepository tagToPostRepository;
     private final UserRepository userRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
     public AddingPostService(GlobalSettingsRepository globalSettingsRepository,
                              PostRepository postRepository,
                              TagRepository tagRepository,
                              TagToPostRepository tagToPostRepository,
-                             UserRepository userRepository) {
+                             UserRepository userRepository,
+                             HttpSession httpSession,
+                             UserLoginService userLoginService) {
         this.globalSettingsRepository = globalSettingsRepository;
         this.postRepository = postRepository;
         this.tagRepository = tagRepository;
         this.tagToPostRepository = tagToPostRepository;
         this.userRepository = userRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
-    public ResponseEntity<AddingPostResponse> addPost(AddingPostRequest addingPostRequest, int idUser) {
-        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+    public ResponseEntity<AddingPostResponse> addPost(AddingPostRequest addingPostRequest) {
+        User user = userRepository.findById(userLoginService.getIdentifierMap().get(httpSession.getId())).orElseThrow(PostsException::new);
         if (!globalSettingsRepository.findValuePostPremoderation().equals(VALUE_YES) & addingPostRequest.getActive() == 1) {
             return new ResponseEntity(recordingOrSetErrors(addingPostRequest, user, ModerationStatus.ACCEPTED), HttpStatus.OK);
         }

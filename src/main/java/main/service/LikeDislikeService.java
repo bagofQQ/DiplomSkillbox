@@ -9,6 +9,7 @@ import main.model.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.util.Calendar;
 import java.util.List;
 
@@ -17,15 +18,19 @@ public class LikeDislikeService {
 
     private final UserRepository userRepository;
     private final PostVotesRepository postVotesRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
-    public LikeDislikeService(UserRepository userRepository, PostVotesRepository postVotesRepository) {
+    public LikeDislikeService(UserRepository userRepository, PostVotesRepository postVotesRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.userRepository = userRepository;
         this.postVotesRepository = postVotesRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
-    public VoteResponse postVote(int idUser, int postId, int voteAmount) {
-        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+    public VoteResponse postVote(int postId, int voteAmount) {
+        User user = userRepository.findById(userLoginService.getIdentifierMap().get(httpSession.getId())).orElseThrow(PostsException::new);
 
         List<PostVotes> postVotesList = postVotesRepository.findOnePostVotes(postId, user.getId());
 

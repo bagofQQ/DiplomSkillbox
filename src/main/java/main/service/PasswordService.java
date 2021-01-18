@@ -24,8 +24,6 @@ public class PasswordService {
     @Value("${blog.constants.errorCaptcha}")
     private String ERROR_CAPTCHA;
 
-    private int idUserChangePassword;
-
     private final UserRepository userRepository;
     private final CaptchaCodesRepository captchaCodesRepository;
 
@@ -36,14 +34,13 @@ public class PasswordService {
     }
 
     public PasswordResponse updatePassword(PasswordRequest password) {
-
-        HashMap<String, String> errors = checkPasswordErrors(password);
+        List<User> findUserCode = userRepository.findUserCode(password.getCode());
+        HashMap<String, String> errors = checkPasswordErrors(password, findUserCode);
         if (!errors.isEmpty()) {
             return setErrors(errors);
         }
         PasswordResponse passwordResponse = new PasswordResponse();
-        int idUser = getIdUserChangePassword();
-        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+        User user = findUserCode.get(0);
         user.setCode(password.getCaptchaSecret());
         user.setPassword(password.getPassword());
         userRepository.save(user);
@@ -52,14 +49,9 @@ public class PasswordService {
         return passwordResponse;
     }
 
-    private HashMap<String, String> checkPasswordErrors(PasswordRequest password) {
+    private HashMap<String, String> checkPasswordErrors(PasswordRequest password, List<User> findUserCode) {
         HashMap<String, String> errors = new HashMap<>();
-        List<User> findUserCode = userRepository.findUserCode(password.getCode());
-        if (findUserCode.size() == 1) {
-            for (User f : findUserCode) {
-                setIdUserChangePassword(f.getId());
-            }
-        } else {
+        if(findUserCode.size() != 1){
             errors.put("code", ERROR_CODE);
         }
         if (captchaCodesRepository.countCaptcha(password.getCaptchaSecret(), password.getCaptcha()) < 1) {
@@ -81,14 +73,4 @@ public class PasswordService {
         passwordResponse.setResult(false);
         return passwordResponse;
     }
-
-    private int getIdUserChangePassword() {
-        return idUserChangePassword;
-    }
-
-    private void setIdUserChangePassword(int idUserChangePassword) {
-        this.idUserChangePassword = idUserChangePassword;
-    }
-
-
 }

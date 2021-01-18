@@ -7,9 +7,11 @@ import main.api.response.addingpost.ErrorsAddingPostResponse;
 import main.model.*;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,17 +29,22 @@ public class EditingPostService {
     private final TagRepository tagRepository;
     private final TagToPostRepository tagToPostRepository;
     private final UserRepository userRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
-    public EditingPostService(PostRepository postRepository, TagRepository tagRepository, TagToPostRepository tagToPostRepository, UserRepository userRepository) {
+    @Autowired
+    public EditingPostService(PostRepository postRepository, TagRepository tagRepository, TagToPostRepository tagToPostRepository, UserRepository userRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.postRepository = postRepository;
         this.tagRepository = tagRepository;
         this.tagToPostRepository = tagToPostRepository;
         this.userRepository = userRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
 
-    public AddingPostResponse editPost(AddingPostRequest editPostRequest, int idUser, int postId) {
-        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+    public AddingPostResponse editPost(AddingPostRequest editPostRequest, int postId) {
+        User user = userRepository.findById(userLoginService.getIdentifierMap().get(httpSession.getId())).orElseThrow(PostsException::new);
         Post post = postRepository.findById(postId).orElseThrow(PostsException::new);
 
         HashMap<String, String> errors = checkAddErrors(editPostRequest);

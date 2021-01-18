@@ -8,18 +8,12 @@ import main.api.response.posts.CountPostsResponse;
 import main.api.response.singlepost.SinglePostResponse;
 import main.api.response.vote.VoteResponse;
 import main.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
-
 @RestController
 public class ApiPostController {
-
-    @Autowired
-    private HttpSession httpSession;
 
     private final AddingPostService addingPostService;
     private final UserLoginService userLoginService;
@@ -53,72 +47,53 @@ public class ApiPostController {
 
     @PostMapping("/api/post")
     public ResponseEntity<AddingPostResponse> addPost(@RequestBody AddingPostRequest addingPostRequest) {
-
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return addingPostService.addPost(addingPostRequest, idUser);
+        if (userLoginService.idUserAuthorized()) {
+            return addingPostService.addPost(addingPostRequest);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 
     @GetMapping("/api/post/moderation")
     public ResponseEntity<CountPostsResponse> moderation(@RequestParam int offset, @RequestParam int limit, @RequestParam String status) {
-
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idModer = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(postsService.getModerationPosts(idModer, offset, limit, status), HttpStatus.OK);
+        if (userLoginService.idUserAuthorized()) {
+            return new ResponseEntity(postsService.getModerationPosts(offset, limit, status), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 
     @GetMapping("/api/post/my")
     public ResponseEntity<CountPostsResponse> myPost(@RequestParam int offset, @RequestParam int limit, @RequestParam String status) {
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(postsService.getMyPosts(idUser, offset, limit, status), HttpStatus.OK);
+        if (userLoginService.idUserAuthorized()) {
+            return new ResponseEntity(postsService.getMyPosts(offset, limit, status), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 
     @PostMapping(value = "/api/post/like")
     public ResponseEntity<VoteResponse> like(@RequestBody LikeRequest likeRequest) {
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(likeDislikeService.postVote(idUser, likeRequest.getPostId(), 1), HttpStatus.OK);
+        if (userLoginService.idUserAuthorized()) {
+            return new ResponseEntity(likeDislikeService.postVote(likeRequest.getPostId(), 1), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-
     }
 
     @PostMapping("/api/post/dislike")
     public ResponseEntity<VoteResponse> dislike(@RequestBody DislikeRequest dislikeRequest) {
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(likeDislikeService.postVote(idUser, dislikeRequest.getPostId(), -1), HttpStatus.OK);
+        if (userLoginService.idUserAuthorized()) {
+            return new ResponseEntity(likeDislikeService.postVote(dislikeRequest.getPostId(), -1), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 
     @GetMapping("/api/post/{id}")
     public ResponseEntity<SinglePostResponse> getSingle(@PathVariable int id) {
-        String identifier = httpSession.getId();
-        return singlePostService.getSinglePost(id, identifier, userLoginService.getIdentifierMap());
+        return singlePostService.getSinglePost(id);
     }
 
     @PutMapping("/api/post/{id}")
     public ResponseEntity<AddingPostResponse> editPost(@RequestBody AddingPostRequest editPostRequest, @PathVariable int id) {
-        String identifier = httpSession.getId();
-        if (userLoginService.getIdentifierMap().containsKey(identifier)) {
-            int idUser = userLoginService.getIdentifierMap().get(identifier);
-            return new ResponseEntity(editingPostService.editPost(
-                    editPostRequest,
-                    idUser,
-                    id), HttpStatus.OK);
+        if (userLoginService.idUserAuthorized()) {
+            return new ResponseEntity(editingPostService.editPost(editPostRequest, id), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }

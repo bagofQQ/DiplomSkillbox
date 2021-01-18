@@ -10,7 +10,6 @@ import main.api.response.registration.UserRegistrationResponse;
 import main.api.response.restore.EmailResponse;
 import main.api.response.restore.RestoreResponse;
 import main.api.response.СaptchaResponse;
-import main.model.GlobalSettings;
 import main.model.GlobalSettingsRepository;
 import main.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 @RestController
@@ -34,8 +32,6 @@ public class ApiAuthController {
     @Autowired
     private GlobalSettingsRepository globalSettingsRepository;
 
-    @Autowired
-    private HttpSession httpSession;
 
     private final СaptchaService сaptchaService;
     private final UserRegistrationService userRegistrationService;
@@ -80,13 +76,10 @@ public class ApiAuthController {
 
     @GetMapping("/api/auth/logout")
     public ResponseEntity<LogoutResponse> logout(){
-
-        String identifier = httpSession.getId();
-        if(userLoginService.getIdentifierMap().containsKey(identifier)){
+        if(userLoginService.idUserAuthorized()){
             return new ResponseEntity(userLoginService.logoutUser(), HttpStatus.OK);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-
     }
 
     @PostMapping("/api/auth/restore")

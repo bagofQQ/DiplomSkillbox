@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,17 +28,21 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostCommentRepository postCommentRepository;
     private final PostRepository postRepository;
+    private final HttpSession httpSession;
+    private final UserLoginService userLoginService;
 
     @Autowired
-    public CommentService(UserRepository userRepository, PostCommentRepository postCommentRepository, PostRepository postRepository) {
+    public CommentService(UserRepository userRepository, PostCommentRepository postCommentRepository, PostRepository postRepository, HttpSession httpSession, UserLoginService userLoginService) {
         this.userRepository = userRepository;
         this.postCommentRepository = postCommentRepository;
         this.postRepository = postRepository;
+        this.httpSession = httpSession;
+        this.userLoginService = userLoginService;
     }
 
 
-    public ResponseEntity<CommentResponse> postComment(CommentRequest commentRequest, int idUser) {
-        User user = userRepository.findById(idUser).orElseThrow(PostsException::new);
+    public ResponseEntity<CommentResponse> postComment(CommentRequest commentRequest) {
+        User user = userRepository.findById(userLoginService.getIdentifierMap().get(httpSession.getId())).orElseThrow(PostsException::new);
         Optional<Post> optionalPosts = postRepository.findById(commentRequest.getPostId());
         Optional<PostComment> optionalPostComments = postCommentRepository.findById(commentRequest.getParentId());
         if (optionalPosts.isPresent() || optionalPostComments.isPresent()) {
